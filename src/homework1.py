@@ -42,11 +42,21 @@ def main():
     fig.show()
 
     fig = px.violin(
-        df, title="Violin plot - Sepal Width", x="class", y="sepal width (cm)"
+        df,
+        title="Violin plot - Sepal Width",
+        x="class",
+        y="sepal width (cm)",
+        color="class",
     )
     fig.show()
 
-    fig = px.box(df, title="Box plot - Sepal Length", x="class", y="sepal length (cm)")
+    fig = px.box(
+        df,
+        title="Box plot - Sepal Length",
+        x="class",
+        y="sepal length (cm)",
+        color="class",
+    )
     fig.show()
 
     fig = px.scatter(
@@ -59,11 +69,21 @@ def main():
     fig.show()
 
     fig = px.violin(
-        df, title="Violin plot - Petal Width", x="class", y="petal width (cm)"
+        df,
+        title="Violin plot - Petal Width",
+        x="class",
+        y="petal width (cm)",
+        color="class",
     )
     fig.show()
 
-    fig = px.box(df, title="Box plot - Petal Length", x="class", y="petal length (cm)")
+    fig = px.box(
+        df,
+        title="Box plot - Petal Length",
+        x="class",
+        y="petal length (cm)",
+        color="class",
+    )
     fig.show()
 
     X_orig = df[
@@ -88,8 +108,10 @@ def main():
 
     probability = pipeline_RandomForest.predict_proba(X_orig)
     prediction = pipeline_RandomForest.predict(X_orig)
+    print("Predictions made using StandardScaler and RandomForest")
     print(f"Probability: {probability}")
     print(f"Predictions: {prediction}")
+    print("")
 
     pipeline_Neighbors = Pipeline(
         [
@@ -102,8 +124,10 @@ def main():
 
     probability = pipeline_Neighbors.predict_proba(X_orig)
     prediction = pipeline_Neighbors.predict(X_orig)
+    print("Predictions made using StandardScaler and KNeighbors")
     print(f"Probability: {probability}")
     print(f"Predictions: {prediction}")
+    print("")
 
     pipeline_DecisionTree = Pipeline(
         [
@@ -116,8 +140,10 @@ def main():
 
     probability = pipeline_DecisionTree.predict_proba(X_orig)
     prediction = pipeline_DecisionTree.predict(X_orig)
+    print("Predictions made using StandardScaler and DecisionTree")
     print(f"Probability: {probability}")
     print(f"Predictions: {prediction}")
+    print("")
 
 
 if __name__ == "__main__":

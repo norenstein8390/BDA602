@@ -6,12 +6,11 @@ CREATE TABLE batter_game_stat AS
 SELECT
     bc.batter AS batter_id,
     bc.game_id,
-    DATE(game.local_date) AS game_date,
+    game.local_date AS game_date,
     bc.atBat AS AB,
     bc.Hit AS hit
 FROM batter_counts bc
-JOIN game ON bc.game_id = game.game_id
-WHERE bc.atBat > 0;
+JOIN game ON bc.game_id = game.game_id;
 
 CREATE INDEX batter_game_index ON batter_game_stat(batter_id, game_id);
 
@@ -22,6 +21,7 @@ SELECT
     batter_id,
     ROUND(SUM(hit) / SUM(AB), 3) AS historic_avg
 FROM batter_game_stat
+WHERE AB > 0
 GROUP BY batter_id;
 
 DROP TABLE IF EXISTS annual_avg;
@@ -32,6 +32,7 @@ SELECT
     YEAR(game_date),
     ROUND(SUM(hit) / SUM(AB), 3) AS annual_avg
 FROM batter_game_stat
+WHERE AB > 0
 GROUP BY
     batter_id,
     YEAR(game_date);
@@ -48,6 +49,7 @@ JOIN batter_game_stat bgs2
 ON bgs2.game_date
 BETWEEN DATE_SUB(bgs1.game_date, INTERVAL 100 DAY) AND DATE_SUB(bgs1.game_date, INTERVAL 1 DAY)
 AND bgs1.batter_id = bgs2.batter_id
+WHERE bgs2.AB > 0
 GROUP BY
     bgs1.batter_id,
     bgs1.game_date;

@@ -29,7 +29,7 @@ DROP TABLE IF EXISTS annual_avg;
 CREATE TABLE annual_avg AS
 SELECT
     batter_id,
-    YEAR(game_date),
+    YEAR(game_date) AS year,
     ROUND(SUM(hit) / SUM(AB), 3) AS annual_avg
 FROM batter_game_stat
 WHERE AB > 0

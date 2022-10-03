@@ -12,14 +12,16 @@ SELECT
 FROM batter_counts bc
 JOIN game ON bc.game_id = game.game_id;
 
-CREATE INDEX batter_game_index ON batter_game_stat(batter_id, game_id);
+CREATE UNIQUE INDEX batter_game_index ON batter_game_stat(batter_id, game_id);
+CREATE INDEX t1_idx_1 ON batter_game_stat (batter_id);
+CREATE INDEX t1_idx_2 ON batter_game_stat (game_date);
 
 DROP TABLE IF EXISTS historic_avg;
 
 CREATE TABLE historic_avg AS
 SELECT
     batter_id,
-    ROUND(SUM(hit) / SUM(AB), 3) AS historic_avg
+    SUM(hit) / SUM(AB) AS historic_avg
 FROM batter_game_stat
 WHERE AB > 0
 GROUP BY batter_id;
@@ -30,7 +32,7 @@ CREATE TABLE annual_avg AS
 SELECT
     batter_id,
     YEAR(game_date) AS year,
-    ROUND(SUM(hit) / SUM(AB), 3) AS annual_avg
+    SUM(hit) / SUM(AB) AS annual_avg
 FROM batter_game_stat
 WHERE AB > 0
 GROUP BY
@@ -43,7 +45,7 @@ CREATE TABLE batter_rolling_date_stat AS
 SELECT
     bgs1.batter_id,
     bgs1.game_date,
-    ROUND(SUM(bgs2.hit) / SUM(bgs2.AB), 3) AS avg_over_last_100_days
+    SUM(bgs2.hit) / SUM(bgs2.AB) AS avg_over_last_100_days
 FROM batter_game_stat bgs1
 JOIN batter_game_stat bgs2
 ON bgs2.game_date
@@ -54,7 +56,9 @@ GROUP BY
     bgs1.batter_id,
     bgs1.game_date;
 
-CREATE INDEX rolling_date_index ON batter_rolling_date_stat(batter_id, game_date);
+CREATE UNIQUE INDEX rolling_date_index ON batter_rolling_date_stat(batter_id, game_date);
+CREATE INDEX t2_idx_1 ON batter_rolling_date_stat (batter_id);
+CREATE INDEX t2_idx_2 ON batter_rolling_date_stat (game_date);
 
 DROP TABLE IF EXISTS rolling_avg;
 

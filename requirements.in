@@ -4,3 +4,4 @@ plotly
 pyspark
 pyspark-stubs
 sklearn
+statsmodels

@@ -202,6 +202,48 @@ def linear_regression(df, predictor_name, response):
     fig.show()
 
 
+def diff_with_mean_of_resp(df, predictor_name, response_name):
+    print(df)
+    num_bins = 10
+    predictor = df[predictor_name]
+    response = df[response_name]
+    min_value = min(predictor)
+    max_value = max(predictor)
+    full_width = abs(max_value - min_value)
+    bin_width = full_width / num_bins
+    lower_bins = np.arange(start=min_value, stop=max_value, step=bin_width)
+    upper_bins = np.arange(start=min_value + bin_width, stop=max_value, step=bin_width)
+    """
+    bin_centers = np.arange(
+        start=min_value + (bin_width / 2), stop=max_value, step=bin_width
+    )
+    """
+
+    bin_counts = np.repeat(0, num_bins)
+    bin_responses = np.repeat(0, num_bins)
+    bin_means = []
+    mean_squared_diff = []
+
+    for i in range(len(predictor)):
+        cur_val = predictor[i]
+        cur_response = response[i]
+
+        for bin_num in range(num_bins):
+            if cur_val >= lower_bins[bin_num] and cur_val <= upper_bins[bin_num]:
+                bin_counts[bin_num] += 1
+                bin_responses[bin_num] += cur_response
+                break
+
+    population_mean = np.mean(response)
+
+    for i in range(num_bins):
+        bin_mean = bin_responses[i] / bin_counts[i]
+        bin_means.append(bin_mean)
+        mean_squared_diff.append((bin_mean - population_mean) ** 2)
+
+    px.histogram(df, x=predictor_name, bins=num_bins)
+
+
 def main():
     # Given a pandas dataframe
     # Contains both a response and predictors
@@ -241,12 +283,14 @@ def main():
         # p-value & t-scole (continuous predictors only) along with it's plot
         # Regression: Continuous response
         # Logistic regression: Boolean response
-
         if cat_check is False:
             if boolean_check is True:
                 logistic_regression(df, predictor, response)
             else:
                 linear_regression(df, predictor, response)
+
+        # Difference with mean of response along with it's plot (weighted and unweighted)
+        diff_with_mean_of_resp(df, response, predictor)
 
 
 if __name__ == "__main__":

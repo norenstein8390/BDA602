@@ -3,5 +3,6 @@ pandas
 plotly
 pyspark
 pyspark-stubs
+seaborn
 sklearn
 statsmodels

@@ -4,12 +4,13 @@ import webbrowser
 
 import numpy as np
 import pandas as pd
+import seaborn
 import statsmodels.api as sm
 from plotly import express as px
 from plotly import figure_factory as ff
 from plotly import graph_objects as go
 from plotly.subplots import make_subplots
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 
 pd.set_option("mode.use_inf_as_na", True)
 
@@ -20,22 +21,21 @@ def response_type_check(df, response):
 
     if unique_responses == 2:
         boolean_check = True
-        print("Response is boolean\n")
     else:
         boolean_check = False
-        print("Response is continuous\n")
 
     return boolean_check
 
 
 def cat_cont_check(df, predictor):
     # Determine if the predictor is cat/cont
-    if isinstance(df[predictor][0], float):
+
+    if df[predictor].dtype == float or (
+        (float(df[predictor].nunique()) / len(df[predictor])) > 0.05
+    ):
         cat_check = False
-        print("Predictor {} is continuous\n".format(predictor))
     else:
         cat_check = True
-        print("Predictor {} is categorical\n".format(predictor))
 
     return cat_check
 
@@ -99,6 +99,8 @@ def bool_response_cont_predictor_plots(df, predictor, response):
 def cont_response_cat_predictor_plots(df, predictor, response):
     # Distribution Plot
     predictors = df[predictor].unique()
+    if not df[predictor].dtype == "category":
+        predictors.sort()
     hist_data = []
     group_labels = []
 
@@ -155,9 +157,9 @@ def logistic_regression(df, predictor_name, response):
     x = temp_df[predictor_name]
 
     unique_responses = temp_df[response].unique()
-    temp_df.loc[df[response] == unique_responses[0], response] = 0
-    temp_df.loc[df[response] == unique_responses[1], response] = 1
-    y = temp_df[response]
+    temp_df.loc[df[response] == unique_responses[0], response] = int(0)
+    temp_df.loc[df[response] == unique_responses[1], response] = int(1)
+    y = temp_df[response].map(int)
 
     predictor = sm.add_constant(x)
     logistic_regression_model = sm.Logit(np.asarray(y), np.asarray(predictor))
@@ -168,7 +170,7 @@ def logistic_regression(df, predictor_name, response):
     fig.update_layout(
         title=f"Variable: {predictor_name}: (t-value={t_value}) (p-value={p_value})",
         xaxis_title=f"Variable: {predictor_name}",
-        yaxis_title="y",
+        yaxis_title="y - 0: {}, 1:{}".format(unique_responses[0], unique_responses[1]),
     )
     fig.write_html("output/figs/" + predictor_name + "/logistic_regression.html")
     return t_value, p_value
@@ -200,6 +202,10 @@ def linear_regression(df, predictor_name, response):
 
 
 def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_check):
+    df = pd.DataFrame(
+        {predictor_name: df[predictor_name], response_name: df[response_name]}
+    )
+
     if bool_check is True:
         unique_responses = df[response_name].unique()
         df.loc[df[response_name] == unique_responses[0], response_name] = 0
@@ -214,11 +220,24 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
     bin_mean_minus_pop_mean = []
     mean_squared_diff = []
     weighted_mean_squared_diff = []
+    dropped = False
 
     if cat_check is True:
         num_bins = df[predictor_name].nunique()
         unique_vals = df[predictor_name].unique()
-        unique_vals.sort()
+        if not df[predictor_name].dtype == "category":
+            unique_vals = unique_vals.tolist()
+
+            for i in range(len(unique_vals)):
+                if type(unique_vals[i]) is float:
+                    dropped = unique_vals[i]
+                    unique_vals.remove(unique_vals[i])
+            unique_vals.sort()
+
+            if dropped is not False:
+                unique_vals.append(dropped)
+                num_bins += 1
+
         possible_cat_predictors = unique_vals
     else:
         num_bins = 10
@@ -238,15 +257,19 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
         bin_centers = np.arange(
             start=min_value + (bin_width / 2), stop=max_value, step=bin_width
         )
-        bin_counts = np.repeat(0, num_bins)
-        bin_responses = np.repeat(0, num_bins)
 
     for i in range(len(predictor)):
         cur_val = predictor[i]
         cur_response = response[i]
 
         for bin_num in range(num_bins):
-            if (cat_check is True and cur_val == possible_cat_predictors[bin_num]) or (
+            if (
+                cat_check is True
+                and (
+                    (cur_val is possible_cat_predictors[bin_num])
+                    or cur_val == possible_cat_predictors[bin_num]
+                )
+            ) or (
                 cat_check is False
                 and cur_val >= lower_bins[bin_num]
                 and cur_val <= upper_bins[bin_num]
@@ -258,7 +281,10 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
     population_mean = np.mean(response)
 
     for i in range(num_bins):
-        bin_mean = bin_responses[i] / bin_counts[i]
+        if bin_counts[i] == 0:
+            bin_mean = 0
+        else:
+            bin_mean = bin_responses[i] / bin_counts[i]
         bin_means.append(bin_mean)
         bin_mean_minus_pop_mean.append(bin_mean - population_mean)
         mean_squared_diff.append((bin_mean - population_mean) ** 2)
@@ -271,6 +297,10 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     if cat_check is True:
+        if dropped is not False:
+            possible_cat_predictors.remove(dropped)
+            possible_cat_predictors.append("NAN")
+
         fig.add_trace(
             go.Bar(x=possible_cat_predictors, y=bin_counts, name="Population"),
             secondary_y=False,
@@ -281,6 +311,15 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
                 x=possible_cat_predictors,
                 y=bin_mean_minus_pop_mean,
                 name="\u03BC(i) - \u03BC(population)",
+            ),
+            secondary_y=True,
+        )
+
+        fig.add_trace(
+            go.Scatter(
+                x=possible_cat_predictors,
+                y=np.repeat(population_mean, num_bins),
+                name="\u03BC(population)",
             ),
             secondary_y=True,
         )
@@ -298,7 +337,14 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
             secondary_y=True,
         )
 
-    fig.add_hline(y=population_mean, name="population mean")
+        fig.add_trace(
+            go.Scatter(
+                x=bin_centers,
+                y=np.repeat(population_mean, num_bins),
+                name="\u03BC(population)",
+            ),
+            secondary_y=True,
+        )
 
     fig.update_layout(
         title_text="Difference with Mean of Response - Predictor {}".format(
@@ -308,11 +354,20 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
 
     fig.update_xaxes(title_text="Predictor Bin")
     fig.update_yaxes(title_text="Population", secondary_y=False)
-    fig.update_yaxes(
-        title_text="Response",
-        secondary_y=True,
-        range=[-(max(response)), max(response)],
-    )
+    if bool_check is True:
+        fig.update_yaxes(
+            title_text="Response- 0: {}, 1: {}".format(
+                unique_responses[0], unique_responses[1]
+            ),
+            secondary_y=True,
+            range=[-(max(response)), max(response)],
+        )
+    else:
+        fig.update_yaxes(
+            title_text="Response",
+            secondary_y=True,
+            range=[-(max(response)), max(response)],
+        )
     fig.update_layout(
         dict(
             yaxis2={"anchor": "x", "overlaying": "y", "side": "left"},
@@ -321,21 +376,12 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
     )
 
     dif_w_mean_of_resp = np.mean(mean_squared_diff)
-    print(
-        "Difference with mean of response (unweighted) = {}".format(
-            str(dif_w_mean_of_resp)
-        )
-    )
-    print(
-        "Difference with mean of response (weighted) = {}".format(
-            str(sum(weighted_mean_squared_diff))
-        )
-    )
-    return dif_w_mean_of_resp, sum(weighted_mean_squared_diff)
+
     fig.write_html("output/figs/" + predictor_name + "/diff_w_mean_of_resp.html")
+    return dif_w_mean_of_resp, sum(weighted_mean_squared_diff)
 
 
-def random_forest(df, cont_list, response):
+def random_forest(df, cont_list, response, bool_check):
     cont_list.append(response)
 
     cont_df = df[cont_list]
@@ -346,13 +392,16 @@ def random_forest(df, cont_list, response):
     y = cont_df[response]
     cont_list = cont_list.remove(response)
 
-    classifier = RandomForestClassifier()
+    if bool_check is True:
+        classifier = RandomForestClassifier()
+    else:
+        classifier = RandomForestRegressor()
+
     classifier.fit(X, y)
 
     feature_imp = pd.Series(
         classifier.feature_importances_, index=cont_list
     ).sort_values(ascending=False)
-    # print(feature_imp)
     return feature_imp
 
 
@@ -366,18 +415,9 @@ def make_clickable(val):
 def main():
     # Given a pandas dataframe
     # Contains both a response and predictors
-    df = pd.read_csv(
-        "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/titanic.csv"
-    )
-
-    # Given a list of predictors and the response columns
-    predictors = [
-        "pclass",
-        "sex",
-        "age",
-        "sibsp",
-        "parch",
-    ]
+    # Replace with other datasets to test
+    df = seaborn.load_dataset(name="titanic")
+    predictors = ["pclass", "sex", "age", "sibsp", "parch", "fare"]
     response = "survived"
 
     out_dir_exist = os.path.exists("output/figs")
@@ -388,6 +428,11 @@ def main():
 
     # Determine if response is continuous or boolean
     bool_check = response_type_check(df, response)
+
+    if bool_check is True:
+        response_name = "boolean"
+    else:
+        response_name = "continuous"
 
     response_col = []
     predictor_col = []
@@ -539,7 +584,7 @@ def main():
         rf_var_imp_col.append("NA")
 
     # Random Forest Variable importance ranking (continuous predictors only)
-    importance = random_forest(df, cont_list, response)
+    importance = random_forest(df, cont_list, response, bool_check)
 
     counter = -1
 
@@ -548,7 +593,7 @@ def main():
         rf_var_imp_col[i] = importance[counter]
 
     data = {
-        "Response": response_col,
+        "Response ({})".format(response_name): response_col,
         "Predictor": predictor_col,
         "Heatmap": heatmap_col,
         "Distribution Plot": distribution_plot_col,
@@ -577,7 +622,6 @@ def main():
         }
     )
 
-    # final = styler.render(escape=False)
     html = styler.to_html()
 
     with open("output/report.html", "w+") as file:

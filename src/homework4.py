@@ -1,4 +1,6 @@
+import os
 import sys
+import webbrowser
 
 import numpy as np
 import pandas as pd
@@ -8,6 +10,8 @@ from plotly import figure_factory as ff
 from plotly import graph_objects as go
 from plotly.subplots import make_subplots
 from sklearn.ensemble import RandomForestClassifier
+
+pd.set_option("mode.use_inf_as_na", True)
 
 
 def response_type_check(df, response):
@@ -37,19 +41,15 @@ def cat_cont_check(df, predictor):
 
 
 def bool_response_cat_predictor_plots(df, predictor, response):
-    x = df[predictor]
-    x_type = type(x[0])
+    df.sort_values(by=[predictor])
 
-    # density_heatmap needs same datatypes and this should work
-    df[response] = df[response].map(x_type)
-
-    plot = px.density_heatmap(
+    fig = px.density_heatmap(
         df,
         x=predictor,
         y=response,
         title="{} v. {}: Heatmap".format(predictor, response),
     )
-    plot.show()
+    fig.write_html("output/figs/" + predictor + "/heatmap.html")
 
 
 def bool_response_cont_predictor_plots(df, predictor, response):
@@ -58,12 +58,8 @@ def bool_response_cont_predictor_plots(df, predictor, response):
     response1 = responses[0]
     response2 = responses[1]
 
-    response1_predictor = df[df[response] == response1][predictor]
-    response2_predictor = df[df[response] == response2][predictor]
-
-    pd.set_option("mode.use_inf_as_na", True)
-    response1_predictor = response1_predictor.dropna()
-    response2_predictor = response2_predictor.dropna()
+    response1_predictor = df[df[response] == response1][predictor].dropna()
+    response2_predictor = df[df[response] == response2][predictor].dropna()
 
     hist_data = [response1_predictor, response2_predictor]
     group_labels = [
@@ -77,7 +73,6 @@ def bool_response_cont_predictor_plots(df, predictor, response):
         xaxis_title=predictor,
         yaxis_title="Distribution",
     )
-    fig1.show()
 
     # Violin Plot
     fig2 = go.Figure()
@@ -97,7 +92,8 @@ def bool_response_cont_predictor_plots(df, predictor, response):
         xaxis_title=response,
         yaxis_title=predictor,
     )
-    fig2.show()
+    fig1.write_html("output/figs/" + predictor + "/distribution_plot.html")
+    fig2.write_html("output/figs/" + predictor + "/violin_plot.html")
 
 
 def cont_response_cat_predictor_plots(df, predictor, response):
@@ -108,9 +104,7 @@ def cont_response_cat_predictor_plots(df, predictor, response):
 
     for i in range(len(predictors)):
         predictor_i = predictors[i]
-        predictor_i_response = df[df[predictor] == predictor_i][response]
-        pd.set_option("mode.use_inf_as_na", True)
-        predictor_i_response = predictor_i_response.dropna()
+        predictor_i_response = df[df[predictor] == predictor_i][response].dropna()
         hist_data.append(predictor_i_response)
         group_labels.append("Predictor = {}".format(predictor_i))
 
@@ -120,7 +114,6 @@ def cont_response_cat_predictor_plots(df, predictor, response):
         xaxis_title=response,
         yaxis_title="Distribution",
     )
-    fig1.show()
 
     # Violin Plot
     fig2 = go.Figure()
@@ -140,18 +133,16 @@ def cont_response_cat_predictor_plots(df, predictor, response):
         xaxis_title=predictor,
         yaxis_title=response,
     )
-    fig2.show()
+    fig1.write_html("output/figs/" + predictor + "/distribution_plot.html")
+    fig2.write_html("output/figs/" + predictor + "/violin_plot.html")
 
 
 def cont_response_cont_predictor_plots(df, predictor, response):
-    x = df[predictor]
-    y = df[response]
-
-    fig = px.scatter(x=x, y=y, trendline="ols")
+    fig = px.scatter(df, x=predictor, y=response, trendline="ols")
     fig.update_layout(
         title="{} vs. {}: Scatter Plot", xaxis_title=predictor, yaxis_title=response
     )
-    fig.show()
+    fig.write_html("output/figs/" + predictor + "/scatter_plot.html")
 
 
 def logistic_regression(df, predictor_name, response):
@@ -159,11 +150,14 @@ def logistic_regression(df, predictor_name, response):
     y = df[response]
 
     # Remaking df with just these two columns to remove na's
-    df = pd.DataFrame({predictor_name: x, response: y})
-    pd.set_option("mode.use_inf_as_na", True)
-    df = df.dropna()
-    x = df[predictor_name]
-    y = df[response].map(int)
+    temp_df = pd.DataFrame({predictor_name: x, response: y})
+    temp_df = temp_df.dropna()
+    x = temp_df[predictor_name]
+
+    unique_responses = temp_df[response].unique()
+    temp_df.loc[df[response] == unique_responses[0], response] = 0
+    temp_df.loc[df[response] == unique_responses[1], response] = 1
+    y = temp_df[response]
 
     predictor = sm.add_constant(x)
     logistic_regression_model = sm.Logit(np.asarray(y), np.asarray(predictor))
@@ -176,7 +170,8 @@ def logistic_regression(df, predictor_name, response):
         xaxis_title=f"Variable: {predictor_name}",
         yaxis_title="y",
     )
-    fig.show()
+    fig.write_html("output/figs/" + predictor_name + "/logistic_regression.html")
+    return t_value, p_value
 
 
 def linear_regression(df, predictor_name, response):
@@ -184,11 +179,10 @@ def linear_regression(df, predictor_name, response):
     y = df[response]
 
     # Remaking df with just these two columns to remove na's
-    df = pd.DataFrame({predictor_name: x, response: y})
-    pd.set_option("mode.use_inf_as_na", True)
-    df = df.dropna()
-    x = df[predictor_name]
-    y = df[response].map(int)
+    temp_df = pd.DataFrame({predictor_name: x, response: y})
+    temp_df = temp_df.dropna()
+    x = temp_df[predictor_name]
+    y = temp_df[response]
 
     predictor = sm.add_constant(x)
     linear_regression_model = sm.OLS(y, predictor)
@@ -201,7 +195,8 @@ def linear_regression(df, predictor_name, response):
         xaxis_title=f"Variable: {predictor_name}",
         yaxis_title="y",
     )
-    fig.show()
+    fig.write_html("output/figs/" + predictor_name + "/linear_regression.html")
+    return t_value, p_value
 
 
 def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_check):
@@ -209,6 +204,8 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
         unique_responses = df[response_name].unique()
         df.loc[df[response_name] == unique_responses[0], response_name] = 0
         df.loc[df[response_name] == unique_responses[1], response_name] = 1
+
+    df.sort_values(by=predictor_name)
 
     predictor = df[predictor_name]
     response = df[response_name]
@@ -220,7 +217,9 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
 
     if cat_check is True:
         num_bins = df[predictor_name].nunique()
-        possible_cat_predictors = df[predictor_name].unique()
+        unique_vals = df[predictor_name].unique()
+        unique_vals.sort()
+        possible_cat_predictors = unique_vals
     else:
         num_bins = 10
 
@@ -269,8 +268,6 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
             (weight * ((bin_mean - population_mean) ** 2))
         )
 
-    bin_mean_minus_pop_mean = np.array(bin_mean_minus_pop_mean)
-
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
     if cat_check is True:
@@ -278,8 +275,6 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
             go.Bar(x=possible_cat_predictors, y=bin_counts, name="Population"),
             secondary_y=False,
         )
-
-        possible_cat_predictors.sort()
 
         fig.add_trace(
             go.Scatter(
@@ -312,9 +307,9 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
     )
 
     fig.update_xaxes(title_text="Predictor Bin")
-    fig.update_yaxes(title_text="Response", secondary_y=False)
+    fig.update_yaxes(title_text="Population", secondary_y=False)
     fig.update_yaxes(
-        title_text="Population",
+        title_text="Response",
         secondary_y=True,
         range=[-(max(response)), max(response)],
     )
@@ -324,7 +319,6 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
             yaxis={"anchor": "x", "domain": [0.0, 1.0], "side": "right"},
         )
     )
-    fig.show()
 
     dif_w_mean_of_resp = np.mean(mean_squared_diff)
     print(
@@ -337,18 +331,19 @@ def diff_with_mean_of_resp(df, predictor_name, response_name, cat_check, bool_ch
             str(sum(weighted_mean_squared_diff))
         )
     )
+    return dif_w_mean_of_resp, sum(weighted_mean_squared_diff)
+    fig.write_html("output/figs/" + predictor_name + "/diff_w_mean_of_resp.html")
 
 
 def random_forest(df, cont_list, response):
     cont_list.append(response)
-    pd.set_option("mode.use_inf_as_na", True)
 
-    full_list = df[cont_list]
-    full_list = full_list.dropna()
+    cont_df = df[cont_list]
+    cont_df = cont_df.dropna()
 
-    X = full_list[cont_list]
+    X = cont_df[cont_list]
     X = X.drop(response, axis=1)
-    y = full_list[response]
+    y = cont_df[response]
     cont_list = cont_list.remove(response)
 
     classifier = RandomForestClassifier()
@@ -357,7 +352,15 @@ def random_forest(df, cont_list, response):
     feature_imp = pd.Series(
         classifier.feature_importances_, index=cont_list
     ).sort_values(ascending=False)
-    print(feature_imp)
+    # print(feature_imp)
+    return feature_imp
+
+
+def make_clickable(val):
+    if val != "NA":
+        return '<a target="_blank" href="{}">{}</a>'.format(val, val)
+    else:
+        return "NA"
 
 
 def main():
@@ -374,34 +377,146 @@ def main():
         "age",
         "sibsp",
         "parch",
-    ]  # NOTE TO SELF - Test with more predictors in the future (and different type of response)
+    ]
     response = "survived"
+
+    out_dir_exist = os.path.exists("output/figs")
+    if out_dir_exist is False:
+        os.makedirs("output/figs")
+
+    cwd = os.getcwd()
 
     # Determine if response is continuous or boolean
     bool_check = response_type_check(df, response)
 
+    response_col = []
+    predictor_col = []
+    heatmap_col = []
+    distribution_plot_col = []
+    violin_plot_col = []
+    scatter_plot_col = []
+    t_score_col = []
+    p_value_col = []
+    logistic_regression_col = []
+    linear_regression_col = []
+    rf_var_imp_col = []
+    mwr_unweighted_col = []
+    mwr_weighted_col = []
+    mwr_plot_col = []
+
     cont_list = []  # will store continuous predictors for random forest
+    counter = -1
+    counter_list = []
 
     # Loop through each predictor column
     for predictor in predictors:
+        counter += 1
+
+        out_dir_exist = os.path.exists("output/figs/{}".format(predictor))
+        if out_dir_exist is False:
+            os.makedirs("output/figs/{}".format(predictor))
+
+        response_col.append(response)
+
         # Determine if the predictor is cat/cont
         cat_check = cat_cont_check(df, predictor)
 
         if cat_check is False:
             cont_list.append(predictor)
+            counter_list.append(counter)
+            predictor_type_string = "cont"
+        else:
+            predictor_type_string = "cat"
+
+        predictor_col.append(predictor + "({})".format(predictor_type_string))
 
         # Automatically generate the necessary plot(s) to inspect it
+        # Calculate the different ranking algos
+        # p-value & t-score (continuous predictors only) along with it's plot
+        # Regression: Continuous response
+        # Logistic regression: Boolean response
         if bool_check is True and cat_check is True:
             bool_response_cat_predictor_plots(df, predictor, response)
+            heatmap_col.append(
+                "file:///" + cwd + "/output/figs/" + predictor + "/heatmap.html"
+            )
+            distribution_plot_col.append("NA")
+            violin_plot_col.append("NA")
+            scatter_plot_col.append("NA")
+
+            t_score_col.append("NA")
+            p_value_col.append("NA")
+            logistic_regression_col.append("NA")
+            linear_regression_col.append("NA")
         elif bool_check is True and cat_check is False:
             bool_response_cont_predictor_plots(df, predictor, response)
+            heatmap_col.append("NA")
+            distribution_plot_col.append(
+                "file:///"
+                + cwd
+                + "/output/figs/"
+                + predictor
+                + "/distribution_plot.html"
+            )
+            violin_plot_col.append(
+                "file:///" + cwd + "/output/figs/" + predictor + "/violin_plot.html"
+            )
+            scatter_plot_col.append("NA")
+
+            t_score, p_value = logistic_regression(df, predictor, response)
+            t_score_col.append(t_score)
+            p_value_col.append(p_value)
+            logistic_regression_col.append(
+                "file:///"
+                + cwd
+                + "/output/figs/"
+                + predictor
+                + "/logistic_regression.html"
+            )
+            linear_regression_col.append("NA")
         elif bool_check is False and cat_check is True:
             cont_response_cat_predictor_plots(df, predictor, response)
+            heatmap_col.append("NA")
+            distribution_plot_col.append(
+                "file:///"
+                + cwd
+                + "/output/figs/"
+                + predictor
+                + "/distribution_plot.html"
+            )
+            violin_plot_col.append(
+                "file:///" + cwd + "/output/figs/" + predictor + "/violin_plot.html"
+            )
+            scatter_plot_col.append("NA")
+
+            t_score_col.append("NA")
+            p_value_col.append("NA")
+            logistic_regression_col.append("NA")
+            linear_regression_col.append("NA")
         else:
             cont_response_cont_predictor_plots(df, predictor, response)
+            heatmap_col.append("NA")
+            distribution_plot_col.append("NA")
+            violin_plot_col.append("NA")
+            scatter_plot_col.append(
+                "file:///" + cwd + "/output/figs/" + predictor + "/scatter_plot.html"
+            )
 
+            t_score, p_value = linear_regression(df, predictor, response)
+            t_score_col.append(t_score)
+            p_value_col.append(p_value)
+            logistic_regression_col.append("NA")
+            linear_regression_col.append(
+                "file:///"
+                + cwd
+                + "/output/figs/"
+                + predictor
+                + "/linear_regression.html"
+            )
+
+        """
         # Calculate the different ranking algos
-        # p-value & t-scole (continuous predictors only) along with it's plot
+        # p-value & t-score (continuous predictors only) along with it's plot
         # Regression: Continuous response
         # Logistic regression: Boolean response
         if cat_check is False:
@@ -409,12 +524,68 @@ def main():
                 logistic_regression(df, predictor, response)
             else:
                 linear_regression(df, predictor, response)
+        """
 
         # Difference with mean of response along with it's plot (weighted and unweighted)
-        diff_with_mean_of_resp(df, predictor, response, cat_check, bool_check)
+        unweighted, weighted = diff_with_mean_of_resp(
+            df, predictor, response, cat_check, bool_check
+        )
+        mwr_unweighted_col.append(unweighted)
+        mwr_weighted_col.append(weighted)
+        mwr_plot_col.append(
+            "file:///" + cwd + "/output/figs/" + predictor + "/diff_w_mean_of_resp.html"
+        )
+
+        rf_var_imp_col.append("NA")
 
     # Random Forest Variable importance ranking (continuous predictors only)
-    random_forest(df, cont_list, response)
+    importance = random_forest(df, cont_list, response)
+
+    counter = -1
+
+    for i in counter_list:
+        counter += 1
+        rf_var_imp_col[i] = importance[counter]
+
+    data = {
+        "Response": response_col,
+        "Predictor": predictor_col,
+        "Heatmap": heatmap_col,
+        "Distribution Plot": distribution_plot_col,
+        "Violin Plot": violin_plot_col,
+        "Scatter Plot": scatter_plot_col,
+        "t-score": t_score_col,
+        "p-value": p_value_col,
+        "Logistic Regression Plot": logistic_regression_col,
+        "Linear Regression Plot": linear_regression_col,
+        "RF VarImp": rf_var_imp_col,
+        "MWR Unweighted": mwr_unweighted_col,
+        "MWR Weighted": mwr_weighted_col,
+        "MWR Plot": mwr_plot_col,
+    }
+    df = pd.DataFrame(data)
+
+    styler = df.style.format(
+        {
+            "Heatmap": make_clickable,
+            "Distribution Plot": make_clickable,
+            "Violin Plot": make_clickable,
+            "Scatter Plot": make_clickable,
+            "Logistic Regression Plot": make_clickable,
+            "Linear Regression Plot": make_clickable,
+            "MWR Plot": make_clickable,
+        }
+    )
+
+    # final = styler.render(escape=False)
+    html = styler.to_html()
+
+    with open("output/report.html", "w+") as file:
+        file.write(html)
+    file.close()
+
+    filename = "file:///" + os.getcwd() + "/" + "output/report.html"
+    webbrowser.open_new_tab(filename)
 
 
 if __name__ == "__main__":

@@ -4,5 +4,7 @@ plotly
 pyspark
 pyspark-stubs
 seaborn
+scipy
 sklearn
 statsmodels
+typing

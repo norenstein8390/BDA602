@@ -1,3 +1,4 @@
+import math
 import os
 import random
 import sys
@@ -151,8 +152,6 @@ def cont_cont_correlation(df, predictors, cont_predictor_start, data, response):
             )
             data["Scatter Plot"].append(cont_cont_plots(df, x_predictor, y_predictor))
 
-            cont_cont_brute_force(df, x_predictor, y_predictor, response)
-
 
 def cat_cont_correlation_ratio(categories, values):
     """
@@ -224,8 +223,6 @@ def cont_cat_plots(df, cat_predictor, cont_predictor):
         xaxis_title=cat_predictor,
         yaxis_title=cont_predictor,
     )
-    # fig1.write_html("output/figs/" + predictor + "/distribution_plot.html")
-    # fig2.write_html("output/figs/" + predictor + "/violin_plot.html")
 
     distribution_name = cont_predictor + "_" + cat_predictor + "_distribution_plot"
     distribution_link = "midterm_output/figs/" + distribution_name + ".html"
@@ -253,19 +250,10 @@ def cont_cat_correlation(df, predictors, cont_predictor_start, data, response):
                     np.array(df[cat_predictor]), np.array(df[cont_predictor])
                 )
             )
-            data["Absolute Value of Correlation"].append(
-                abs(
-                    cat_cont_correlation_ratio(
-                        np.array(df[cat_predictor]), np.array(df[cont_predictor])
-                    )
-                )
-            )
 
             plots = cont_cat_plots(df, cat_predictor, cont_predictor)
             data["Distribution Plot"].append(plots[0])
             data["Violin Plot"].append(plots[1])
-
-            cont_cat_brute_force(df, cont_predictor, cat_predictor, response)
 
 
 def fill_na(data):
@@ -378,11 +366,7 @@ def cat_cat_correlation(df, predictors, cont_predictor_start, data, response):
             y_predictor = cat_predictors[j]
             data["Predictors (Cat/Cat)"].append(x_predictor + " and " + y_predictor)
             data["Cramer's V"].append(cat_correlation(df[x_predictor], df[y_predictor]))
-            data["Absolute Value of Correlation"].append(
-                abs(cat_correlation(df[x_predictor], df[y_predictor]))
-            )
             data["Heatmap"].append(cat_cat_plots(df, x_predictor, y_predictor))
-            cat_cat_brute_force(df, x_predictor, y_predictor, response)
 
 
 def cont_cont_matrix(df, predictors, cont_predictor_start, data):
@@ -398,8 +382,6 @@ def cont_cont_matrix(df, predictors, cont_predictor_start, data):
             row.append(abs(pearsonr(df[cont_predictor_i], df[cont_predictor_j])[0]))
 
         matrix.append(row)
-
-    print(type(matrix))
 
     fig = px.imshow(
         matrix,
@@ -486,12 +468,12 @@ def cat_cat_matrix(df, predictors, cont_predictor_start, data):
     data["Cat/Cat Correlation Matrix"].append(name)
 
 
-def cont_cont_brute_force(df, x_predictor_name, y_predictor_name, response_name):
+def cont_cont_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name):
     x_predictor = df[x_predictor_name]
     y_predictor = df[y_predictor_name]
     response = df[response_name]
     pop_mean = np.mean(response)
-    num_bins = 5
+    num_bins = 10
 
     min_value_x = min(x_predictor)
     max_value_x = max(x_predictor)
@@ -556,10 +538,12 @@ def cont_cont_brute_force(df, x_predictor_name, y_predictor_name, response_name)
         for j in range(num_bins):
             if bin_counts[i][j] == 0:
                 bin_mean = float("nan")
+                residual = float("nan")
             else:
                 bin_mean = bin_responses[i][j] / bin_counts[i][j]
+                residual = bin_mean - pop_mean
             bin_means[i][j] = bin_mean
-            bin_residuals[i][j] = bin_mean - pop_mean
+            bin_residuals[i][j] = residual
 
     bin_means = bin_means.transpose()
     bin_residuals = bin_residuals.transpose()
@@ -587,16 +571,44 @@ def cont_cont_brute_force(df, x_predictor_name, y_predictor_name, response_name)
         xaxis_title=x_predictor_name,
         yaxis_title=y_predictor_name,
     )
-    # fig1.show()
-    # fig2.show()
+
+    name_bin_plot = "{}_{}_bin_mean_plot".format(x_predictor_name, y_predictor_name)
+    link_bin_plot = "midterm_output/figs/" + name_bin_plot + ".html"
+    fig1.write_html(link_bin_plot)
+
+    name_residual_plot = "{}_{}_bin_residual_plot".format(
+        x_predictor_name, y_predictor_name
+    )
+    link_residual_plot = "midterm_output/figs/" + name_residual_plot + ".html"
+    fig2.write_html(link_residual_plot)
+
+    bin_residuals = bin_residuals.transpose()
+
+    for i in range(num_bins):
+        for j in range(num_bins):
+            if math.isnan(bin_residuals[i][j]):
+                bin_residuals[i][j] = 0
+            else:
+                bin_residuals[i][j] = bin_residuals[i][j] ** 2
+
+    bin_weighted = np.empty((num_bins, num_bins))
+
+    for i in range(num_bins):
+        for j in range(num_bins):
+            weight = bin_counts[i][j] / len(x_predictor)
+            bin_weighted[i][j] = bin_residuals[i][j] * weight
+
+    unweighted = (1 / (num_bins * num_bins)) * np.sum(bin_residuals)
+    weighted = np.sum(bin_weighted)
+    return unweighted, weighted, name_bin_plot, name_residual_plot
 
 
-def cont_cat_brute_force(df, cont_predictor_name, cat_predictor_name, response_name):
+def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_name):
     cont_predictor = df[cont_predictor_name]
     cat_predictor = df[cat_predictor_name]
     response = df[response_name]
     pop_mean = np.mean(response)
-    num_bins_cont = 5
+    num_bins_cont = 9
     num_bins_cat = cat_predictor.nunique()
 
     min_value_cont = min(cont_predictor)
@@ -713,11 +725,40 @@ def cont_cat_brute_force(df, cont_predictor_name, cat_predictor_name, response_n
         yaxis_title=cat_predictor_name,
     )
 
-    # fig1.show()
-    fig2.show()
+    name_bin_plot = "{}_{}_bin_mean_plot".format(
+        cont_predictor_name, cat_predictor_name
+    )
+    link_bin_plot = "midterm_output/figs/" + name_bin_plot + ".html"
+    fig1.write_html(link_bin_plot)
+
+    name_residual_plot = "{}_{}_bin_residual_plot".format(
+        cont_predictor_name, cat_predictor_name
+    )
+    link_residual_plot = "midterm_output/figs/" + name_residual_plot + ".html"
+    fig2.write_html(link_residual_plot)
+
+    bin_residuals = bin_residuals.transpose()
+
+    for i in range(num_bins_cont):
+        for j in range(num_bins_cat):
+            if math.isnan(bin_residuals[i][j]):
+                bin_residuals[i][j] = 0
+            else:
+                bin_residuals[i][j] = bin_residuals[i][j] ** 2
+
+    bin_weighted = np.empty((num_bins_cont, num_bins_cat))
+
+    for i in range(num_bins_cont):
+        for j in range(num_bins_cat):
+            weight = bin_counts[i][j] / len(cont_predictor)
+            bin_weighted[i][j] = bin_residuals[i][j] * weight
+
+    unweighted = (1 / (num_bins_cont * num_bins_cat)) * np.sum(bin_residuals)
+    weighted = np.sum(bin_weighted)
+    return unweighted, weighted, name_bin_plot, name_residual_plot
 
 
-def cat_cat_brute_force(df, x_predictor_name, y_predictor_name, response_name):
+def cat_cat_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name):
     x_predictor = df[x_predictor_name]
     y_predictor = df[y_predictor_name]
     response = df[response_name]
@@ -842,8 +883,92 @@ def cat_cat_brute_force(df, x_predictor_name, y_predictor_name, response_name):
         yaxis_title=y_predictor_name,
     )
 
-    fig1.show()
-    # fig2.show()
+    name_bin_plot = "{}_{}_bin_mean_plot".format(x_predictor_name, y_predictor_name)
+    link_bin_plot = "midterm_output/figs/" + name_bin_plot + ".html"
+    fig1.write_html(link_bin_plot)
+
+    name_residual_plot = "{}_{}_bin_residual_plot".format(
+        x_predictor_name, y_predictor_name
+    )
+    link_residual_plot = "midterm_output/figs/" + name_residual_plot + ".html"
+    fig2.write_html(link_residual_plot)
+
+    bin_residuals = bin_residuals.transpose()
+
+    for i in range(num_bins_x):
+        for j in range(num_bins_y):
+            if math.isnan(bin_residuals[i][j]):
+                bin_residuals[i][j] = 0
+            else:
+                bin_residuals[i][j] = bin_residuals[i][j] ** 2
+
+    bin_weighted = np.empty((num_bins_x, num_bins_y))
+
+    for i in range(num_bins_x):
+        for j in range(num_bins_y):
+            weight = bin_counts[i][j] / len(x_predictor)
+            bin_weighted[i][j] = bin_residuals[i][j] * weight
+
+    unweighted = (1 / (num_bins_x * num_bins_y)) * np.sum(bin_residuals)
+    weighted = np.sum(bin_weighted)
+    return unweighted, weighted, name_bin_plot, name_residual_plot
+
+
+def cont_cont_brute_force(df, predictors, cont_predictor_start, data, response):
+    cont_predictors = predictors[cont_predictor_start:]
+
+    for i in range(len(cont_predictors)):
+        x_predictor = cont_predictors[i]
+
+        for j in range(i + 1, len(cont_predictors)):
+            y_predictor = cont_predictors[j]
+            data["Predictors (Cont/Cont)"].append(x_predictor + " and " + y_predictor)
+            unweighted, weighted, bin_plot, residual_plot = cont_cont_diff_of_mean(
+                df, x_predictor, y_predictor, response
+            )
+            data["Difference of Mean Response"].append(unweighted)
+            data["Weighted Difference of Mean Response"].append(weighted)
+            data["Bin Mean Plot"].append(bin_plot)
+            data["Bin Residual Plot"].append(residual_plot)
+
+
+def cont_cat_brute_force(df, predictors, cont_predictor_start, data, response):
+    cont_predictors = predictors[cont_predictor_start:]
+    cat_predictors = predictors[:cont_predictor_start]
+
+    for i in range(len(cont_predictors)):
+        cont_predictor = cont_predictors[i]
+
+        for j in range(len(cat_predictors)):
+            cat_predictor = cat_predictors[j]
+            data["Predictors (Cont/Cat)"].append(
+                cont_predictor + " and " + cat_predictor
+            )
+            unweighted, weighted, bin_plot, residual_plot = cont_cat_diff_of_mean(
+                df, cont_predictor, cat_predictor, response
+            )
+            data["Difference of Mean Response"].append(unweighted)
+            data["Weighted Difference of Mean Response"].append(weighted)
+            data["Bin Mean Plot"].append(bin_plot)
+            data["Bin Residual Plot"].append(residual_plot)
+
+
+def cat_cat_brute_force(df, predictors, cont_predictor_start, data, response):
+    cat_predictors = predictors[:cont_predictor_start]
+
+    for i in range(len(cat_predictors)):
+        x_predictor = cat_predictors[i]
+
+        for j in range(i + 1, len(cat_predictors)):
+            y_predictor = cat_predictors[j]
+            data["Predictors (Cat/Cat)"].append(x_predictor + " and " + y_predictor)
+            unweighted, weighted, bin_plot, residual_plot = cat_cat_diff_of_mean(
+                df, x_predictor, y_predictor, response
+            )
+            data["Difference of Mean Response"].append(unweighted)
+            data["Weighted Difference of Mean Response"].append(weighted)
+            data["Bin Mean Plot"].append(bin_plot)
+            data["Bin Residual Plot"].append(residual_plot)
 
 
 def make_clickable(name):
@@ -852,12 +977,10 @@ def make_clickable(name):
 
 
 def main():
-    # Step 7 - Put links to original plots done in HW4
     out_dir_exist = os.path.exists("midterm_output/figs")
     if out_dir_exist is False:
         os.makedirs("midterm_output/figs")
 
-    # Step 1 - Given DataFrame, predictors, and response
     test_data_set = get_test_data_set("titanic")
     df = test_data_set[0]
     df = df.reset_index()
@@ -865,10 +988,8 @@ def main():
     response = test_data_set[2]
     df = df.reset_index()
 
-    # Step 2 - Split dataset
     predictors, cont_predictor_start = split_dataset(df, predictors)
 
-    # Step 3+6+9 - Correlation metrics cont/cont pairs + put in table + brute force
     cont_cont_correlation_data = {
         "Predictors (Cont/Cont)": [],
         "Pearson's r": [],
@@ -886,11 +1007,9 @@ def main():
         {"Scatter Plot": make_clickable}
     )
 
-    # Step 4+6+10 - Correlation metrics cont/cat pairs + put in table + brute force
     cont_cat_correlation_data = {
         "Predictors (Cont/Cat)": [],
         "Correlation Ratio": [],
-        "Absolute Value of Correlation": [],
         "Distribution Plot": [],
         "Violin Plot": [],
     }
@@ -899,17 +1018,15 @@ def main():
     )
     cont_cat_correlation_df = pd.DataFrame(cont_cat_correlation_data)
     cont_cat_correlation_df = cont_cat_correlation_df.sort_values(
-        by=["Absolute Value of Correlation"], ascending=False
+        by=["Correlation Ratio"], ascending=False
     )
     cont_cat_styler = cont_cat_correlation_df.style.format(
         {"Distribution Plot": make_clickable, "Violin Plot": make_clickable}
     )
 
-    # Step 5+6+11 - Correlation metrics  cat/cat pairs + put in table + brute force
     cat_cat_correlation_data = {
         "Predictors (Cat/Cat)": [],
         "Cramer's V": [],
-        "Absolute Value of Correlation": [],
         "Heatmap": [],
     }
     cat_cat_correlation(
@@ -917,12 +1034,11 @@ def main():
     )
     cat_cat_correlation_df = pd.DataFrame(cat_cat_correlation_data)
     cat_cat_correlation_df = cat_cat_correlation_df.sort_values(
-        by=["Absolute Value of Correlation"], ascending=False
+        by=["Cramer's V"], ascending=False
     )
 
     cat_cat_styler = cat_cat_correlation_df.style.format({"Heatmap": make_clickable})
 
-    # Step 8 - Generate correlation matrices
     matrix_data = {
         "Cont/Cont Correlation Matrix": [],
         "Cont/Cat Correlation Matrix": [],
@@ -942,14 +1058,75 @@ def main():
         }
     )
 
+    cont_cont_brute_force_data = {
+        "Predictors (Cont/Cont)": [],
+        "Difference of Mean Response": [],
+        "Weighted Difference of Mean Response": [],
+        "Bin Mean Plot": [],
+        "Bin Residual Plot": [],
+    }
+    cont_cont_brute_force(
+        df, predictors, cont_predictor_start, cont_cont_brute_force_data, response
+    )
+    cont_cont_brute_force_df = pd.DataFrame(cont_cont_brute_force_data)
+    cont_cont_brute_force_df = cont_cont_brute_force_df.sort_values(
+        by=["Weighted Difference of Mean Response"], ascending=False
+    )
+    cont_cont_brute_force_styler = cont_cont_brute_force_df.style.format(
+        {"Bin Mean Plot": make_clickable, "Bin Residual Plot": make_clickable}
+    )
+
+    cont_cat_brute_force_data = {
+        "Predictors (Cont/Cat)": [],
+        "Difference of Mean Response": [],
+        "Weighted Difference of Mean Response": [],
+        "Bin Mean Plot": [],
+        "Bin Residual Plot": [],
+    }
+    cont_cat_brute_force(
+        df, predictors, cont_predictor_start, cont_cat_brute_force_data, response
+    )
+    cont_cat_brute_force_df = pd.DataFrame(cont_cat_brute_force_data)
+    cont_cat_brute_force_df = cont_cat_brute_force_df.sort_values(
+        by=["Weighted Difference of Mean Response"], ascending=False
+    )
+    cont_cat_brute_force_styler = cont_cat_brute_force_df.style.format(
+        {"Bin Mean Plot": make_clickable, "Bin Residual Plot": make_clickable}
+    )
+
+    cat_cat_brute_force_data = {
+        "Predictors (Cat/Cat)": [],
+        "Difference of Mean Response": [],
+        "Weighted Difference of Mean Response": [],
+        "Bin Mean Plot": [],
+        "Bin Residual Plot": [],
+    }
+    cat_cat_brute_force(
+        df, predictors, cont_predictor_start, cat_cat_brute_force_data, response
+    )
+    cat_cat_brute_force_df = pd.DataFrame(cat_cat_brute_force_data)
+    cat_cat_brute_force_df = cat_cat_brute_force_df.sort_values(
+        by=["Weighted Difference of Mean Response"], ascending=False
+    )
+    cat_cat_brute_force_styler = cat_cat_brute_force_df.style.format(
+        {"Bin Mean Plot": make_clickable, "Bin Residual Plot": make_clickable}
+    )
+
     html = (
-        cont_cont_styler.to_html()
+        "Correlation\n\n"
+        + cont_cont_styler.to_html()
         + "\n\n"
         + cont_cat_styler.to_html()
         + "\n\n"
         + cat_cat_styler.to_html()
-        + "\n\n"
+        + "\n\nCorrelation Matrices\n\n"
         + matrix_styler.to_html()
+        + "\n\nBrute Force\n\n"
+        + cont_cont_brute_force_styler.to_html()
+        + "\n\n"
+        + cont_cat_brute_force_styler.to_html()
+        + "\n\n"
+        + cat_cat_brute_force_styler.to_html()
     )
 
     with open("midterm_output/report.html", "w+") as file:

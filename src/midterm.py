@@ -533,6 +533,10 @@ def cont_cont_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name
 
     bin_means = np.empty((num_bins, num_bins))
     bin_residuals = np.empty((num_bins, num_bins))
+    bin_means_text = np.empty((num_bins, num_bins))
+    bin_means_text = bin_means_text.astype(str)
+    bin_residuals_text = np.empty((num_bins, num_bins))
+    bin_residuals_text = bin_residuals_text.astype(str)
 
     for i in range(num_bins):
         for j in range(num_bins):
@@ -544,12 +548,26 @@ def cont_cont_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name
                 residual = bin_mean - pop_mean
             bin_means[i][j] = bin_mean
             bin_residuals[i][j] = residual
+            bin_means_text[i][j] = "{} (Count: {})".format(
+                str(round(bin_mean, 3)), str(int(bin_counts[i][j]))
+            )
+            bin_residuals_text[i][j] = "{} (Count: {})".format(
+                str(round(residual, 3)), str(int(bin_counts[i][j]))
+            )
 
     bin_means = bin_means.transpose()
     bin_residuals = bin_residuals.transpose()
+    bin_means_text = bin_means_text.transpose()
+    bin_residuals_text = bin_residuals_text.transpose()
 
     fig1 = go.Figure(
-        data=go.Heatmap(x=bin_centers_x, y=bin_centers_y, z=bin_means, zmin=0, zmax=1)
+        data=go.Heatmap(
+            x=bin_centers_x,
+            y=bin_centers_y,
+            z=bin_means,
+            zmin=np.min(bin_means),
+            zmax=np.max(bin_means),
+        )
     )
     fig1.update_layout(
         title="{} vs. {}: Bin Mean Plot (Pop Mean: {})".format(
@@ -558,10 +576,15 @@ def cont_cont_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name
         xaxis_title=x_predictor_name,
         yaxis_title=y_predictor_name,
     )
+    fig1.update_traces(text=bin_means_text, texttemplate="%{text}")
 
     fig2 = go.Figure(
         data=go.Heatmap(
-            x=bin_centers_x, y=bin_centers_y, z=bin_residuals, zmin=-1, zmax=1
+            x=bin_centers_x,
+            y=bin_centers_y,
+            z=bin_residuals,
+            zmin=np.min(bin_residuals),
+            zmax=np.max(bin_residuals),
         )
     )
     fig2.update_layout(
@@ -571,6 +594,7 @@ def cont_cont_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name
         xaxis_title=x_predictor_name,
         yaxis_title=y_predictor_name,
     )
+    fig2.update_traces(text=bin_residuals_text, texttemplate="%{text}")
 
     name_bin_plot = "{}_{}_bin_mean_plot".format(x_predictor_name, y_predictor_name)
     link_bin_plot = "midterm_output/figs/" + name_bin_plot + ".html"
@@ -678,18 +702,32 @@ def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_
 
     bin_means = np.empty((num_bins_cont, num_bins_cat))
     bin_residuals = np.empty((num_bins_cont, num_bins_cat))
+    bin_means_text = np.empty((num_bins_cont, num_bins_cat))
+    bin_means_text = bin_means_text.astype(str)
+    bin_residuals_text = np.empty((num_bins_cont, num_bins_cat))
+    bin_residuals_text = bin_residuals_text.astype(str)
 
     for i in range(num_bins_cont):
         for j in range(num_bins_cat):
             if bin_counts[i][j] == 0:
                 bin_mean = float("nan")
+                residual = float("nan")
             else:
                 bin_mean = bin_responses[i][j] / bin_counts[i][j]
+                residual = bin_mean - pop_mean
             bin_means[i][j] = bin_mean
-            bin_residuals[i][j] = bin_mean - pop_mean
+            bin_residuals[i][j] = residual
+            bin_means_text[i][j] = "{} (Count: {})".format(
+                str(round(bin_mean, 3)), str(int(bin_counts[i][j]))
+            )
+            bin_residuals_text[i][j] = "{} (Count: {})".format(
+                str(round(residual, 3)), str(int(bin_counts[i][j]))
+            )
 
     bin_means = bin_means.transpose()
     bin_residuals = bin_residuals.transpose()
+    bin_means_text = bin_means_text.transpose()
+    bin_residuals_text = bin_residuals_text.transpose()
 
     if dropped is not False:
         possible_cat_predictors.remove(dropped)
@@ -697,7 +735,11 @@ def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_
 
     fig1 = go.Figure(
         data=go.Heatmap(
-            x=bin_centers_cont, y=possible_cat_predictors, z=bin_means, zmin=0, zmax=1
+            x=bin_centers_cont,
+            y=possible_cat_predictors,
+            z=bin_means,
+            zmin=np.min(bin_means),
+            zmax=np.max(bin_means),
         )
     )
     fig1.update_layout(
@@ -707,14 +749,15 @@ def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_
         xaxis_title=cont_predictor_name,
         yaxis_title=cat_predictor_name,
     )
+    fig1.update_traces(text=bin_means_text, texttemplate="%{text}")
 
     fig2 = go.Figure(
         data=go.Heatmap(
             x=bin_centers_cont,
             y=possible_cat_predictors,
             z=bin_residuals,
-            zmin=-1,
-            zmax=1,
+            zmin=np.min(bin_residuals),
+            zmax=np.max(bin_residuals),
         )
     )
     fig2.update_layout(
@@ -724,6 +767,7 @@ def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_
         xaxis_title=cont_predictor_name,
         yaxis_title=cat_predictor_name,
     )
+    fig2.update_traces(text=bin_residuals_text, texttemplate="%{text}")
 
     name_bin_plot = "{}_{}_bin_mean_plot".format(
         cont_predictor_name, cat_predictor_name
@@ -828,18 +872,32 @@ def cat_cat_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name):
 
     bin_means = np.empty((num_bins_x, num_bins_y))
     bin_residuals = np.empty((num_bins_x, num_bins_y))
+    bin_means_text = np.empty((num_bins_x, num_bins_y))
+    bin_means_text = bin_means_text.astype(str)
+    bin_residuals_text = np.empty((num_bins_x, num_bins_y))
+    bin_residuals_text = bin_residuals_text.astype(str)
 
     for i in range(num_bins_x):
         for j in range(num_bins_y):
             if bin_counts[i][j] == 0:
                 bin_mean = float("nan")
+                residual = float("nan")
             else:
                 bin_mean = bin_responses[i][j] / bin_counts[i][j]
+                residual = bin_mean - pop_mean
             bin_means[i][j] = bin_mean
-            bin_residuals[i][j] = bin_mean - pop_mean
+            bin_residuals[i][j] = residual
+            bin_means_text[i][j] = "{} (Count: {})".format(
+                str(round(bin_mean, 3)), str(int(bin_counts[i][j]))
+            )
+            bin_residuals_text[i][j] = "{} (Count: {})".format(
+                str(round(residual, 3)), str(int(bin_counts[i][j]))
+            )
 
     bin_means = bin_means.transpose()
     bin_residuals = bin_residuals.transpose()
+    bin_means_text = bin_means_text.transpose()
+    bin_residuals_text = bin_residuals_text.transpose()
 
     if dropped_x is not False:
         possible_x_predictors.remove(dropped_x)
@@ -854,8 +912,8 @@ def cat_cat_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name):
             x=possible_x_predictors,
             y=possible_y_predictors,
             z=bin_means,
-            zmin=0,
-            zmax=1,
+            zmin=np.min(bin_means),
+            zmax=np.max(bin_means),
         )
     )
     fig1.update_layout(
@@ -865,14 +923,15 @@ def cat_cat_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name):
         xaxis_title=x_predictor_name,
         yaxis_title=y_predictor_name,
     )
+    fig1.update_traces(text=bin_means_text, texttemplate="%{text}")
 
     fig2 = go.Figure(
         data=go.Heatmap(
             x=possible_x_predictors,
             y=possible_y_predictors,
             z=bin_residuals,
-            zmin=-1,
-            zmax=1,
+            zmin=np.min(bin_residuals),
+            zmax=np.max(bin_residuals),
         )
     )
     fig2.update_layout(
@@ -882,6 +941,7 @@ def cat_cat_diff_of_mean(df, x_predictor_name, y_predictor_name, response_name):
         xaxis_title=x_predictor_name,
         yaxis_title=y_predictor_name,
     )
+    fig2.update_traces(text=bin_residuals_text, texttemplate="%{text}")
 
     name_bin_plot = "{}_{}_bin_mean_plot".format(x_predictor_name, y_predictor_name)
     link_bin_plot = "midterm_output/figs/" + name_bin_plot + ".html"
@@ -981,12 +1041,24 @@ def main():
     if out_dir_exist is False:
         os.makedirs("midterm_output/figs")
 
-    test_data_set = get_test_data_set("titanic")
+    test_data_set = get_test_data_set("mpg")
     df = test_data_set[0]
-    df = df.reset_index()
     predictors = test_data_set[1]
     response = test_data_set[2]
     df = df.reset_index()
+    print(len(df[response]))
+
+    num_unique_responses = df[response].nunique()
+    if num_unique_responses == 2:
+        unique_responses = df[response].unique()
+        unique_responses.sort()
+        df.loc[df[response] == unique_responses[0], response] = 0
+        df.loc[df[response] == unique_responses[1], response] = 1
+        response_text = "Response '{}' is boolean ({} is 0, {} is 1)".format(
+            response, unique_responses[0], unique_responses[1]
+        )
+    else:
+        response_text = "Response '{}' is continuous".format(response)
 
     predictors, cont_predictor_start = split_dataset(df, predictors)
 
@@ -1113,15 +1185,16 @@ def main():
     )
 
     html = (
-        "Correlation\n\n"
+        "<h1>Midterm Report</h1>\n\n"
+        + "<h2>Correlation</h2>\n\n"
         + cont_cont_styler.to_html()
         + "\n\n"
         + cont_cat_styler.to_html()
         + "\n\n"
         + cat_cat_styler.to_html()
-        + "\n\nCorrelation Matrices\n\n"
+        + "\n\n<h2>Correlation Matrices</h2>\n\n"
         + matrix_styler.to_html()
-        + "\n\nBrute Force\n\n"
+        + "\n\n<h2>Brute Force - {}</h2>\n\n".format(response_text)
         + cont_cont_brute_force_styler.to_html()
         + "\n\n"
         + cont_cat_brute_force_styler.to_html()

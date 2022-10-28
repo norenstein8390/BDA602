@@ -16,22 +16,6 @@ from scipy import stats
 from scipy.stats import pearsonr
 from sklearn import datasets
 
-TITANIC_PREDICTORS = [
-    "pclass",
-    "sex",
-    "age",
-    "sibsp",
-    "embarked",
-    "parch",
-    "fare",
-    "who",
-    "adult_male",
-    "deck",
-    "embark_town",
-    "alone",
-    "class",
-]
-
 
 def get_test_data_set(data_set_name: str = None) -> (pd.DataFrame, List[str], str):
     """Function to load a few test data sets
@@ -48,6 +32,22 @@ def get_test_data_set(data_set_name: str = None) -> (pd.DataFrame, List[str], st
     response: str
         Response variable
     """
+    TITANIC_PREDICTORS = [
+        "pclass",
+        "sex",
+        "age",
+        "sibsp",
+        "embarked",
+        "parch",
+        "fare",
+        "who",
+        "adult_male",
+        "deck",
+        "embark_town",
+        "alone",
+        "class",
+    ]
+
     seaborn_data_sets = ["mpg", "tips", "titanic", "titanic_2"]
     sklearn_data_sets = ["boston", "diabetes", "breast_cancer"]
     all_data_sets = seaborn_data_sets + sklearn_data_sets
@@ -370,6 +370,10 @@ def cat_cat_correlation(df, predictors, cont_predictor_start, data, response):
 
 
 def cont_cont_matrix(df, predictors, cont_predictor_start, data):
+    if cont_predictor_start == len(predictors):
+        data["Cont/Cont Correlation Matrix"].append("N/A")
+        return
+
     cont_predictors = predictors[cont_predictor_start:]
     matrix = []
 
@@ -402,6 +406,10 @@ def cont_cont_matrix(df, predictors, cont_predictor_start, data):
 
 
 def cont_cat_matrix(df, predictors, cont_predictor_start, data):
+    if cont_predictor_start == 0 or cont_predictor_start == len(predictors):
+        data["Cont/Cat Correlation Matrix"].append("N/A")
+        return
+
     cont_predictors = predictors[cont_predictor_start:]
     cat_predictors = predictors[:cont_predictor_start]
     matrix = []
@@ -439,6 +447,10 @@ def cont_cat_matrix(df, predictors, cont_predictor_start, data):
 
 
 def cat_cat_matrix(df, predictors, cont_predictor_start, data):
+    if cont_predictor_start == 0:
+        data["Cat/Cat Correlation Matrix"].append("N/A")
+        return
+
     cat_predictors = predictors[:cont_predictor_start]
     matrix = []
 
@@ -632,7 +644,7 @@ def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_
     cat_predictor = df[cat_predictor_name]
     response = df[response_name]
     pop_mean = np.mean(response)
-    num_bins_cont = 9
+    num_bins_cont = 10
     num_bins_cat = cat_predictor.nunique()
 
     min_value_cont = min(cont_predictor)
@@ -1032,8 +1044,11 @@ def cat_cat_brute_force(df, predictors, cont_predictor_start, data, response):
 
 
 def make_clickable(name):
-    link = "file:///" + os.getcwd() + "/midterm_output/figs/" + name + ".html"
-    return '<a href="{}" target="_blank">{}</a>'.format(link, name)
+    if name == "N/A":
+        return name
+    else:
+        link = "file:///" + os.getcwd() + "/midterm_output/figs/" + name + ".html"
+        return '<a href="{}" target="_blank">{}</a>'.format(link, name)
 
 
 def main():
@@ -1041,12 +1056,11 @@ def main():
     if out_dir_exist is False:
         os.makedirs("midterm_output/figs")
 
-    test_data_set = get_test_data_set("mpg")
+    test_data_set = get_test_data_set("titanic")
     df = test_data_set[0]
     predictors = test_data_set[1]
     response = test_data_set[2]
     df = df.reset_index()
-    print(len(df[response]))
 
     num_unique_responses = df[response].nunique()
     if num_unique_responses == 2:
@@ -1184,23 +1198,24 @@ def main():
         {"Bin Mean Plot": make_clickable, "Bin Residual Plot": make_clickable}
     )
 
-    html = (
-        "<h1>Midterm Report</h1>\n\n"
-        + "<h2>Correlation</h2>\n\n"
-        + cont_cont_styler.to_html()
-        + "\n\n"
-        + cont_cat_styler.to_html()
-        + "\n\n"
-        + cat_cat_styler.to_html()
-        + "\n\n<h2>Correlation Matrices</h2>\n\n"
+    html = "<h1>Midterm Report</h1>\n\n" + "<h2>Correlation</h2>\n\n"
+    if cont_predictor_start != len(predictors):
+        html += cont_cont_styler.to_html() + "\n\n"
+    if cont_predictor_start != 0 and cont_predictor_start != len(predictors):
+        html += cont_cat_styler.to_html() + "\n\n"
+    if cont_predictor_start > 1:
+        html += cat_cat_styler.to_html() + "\n\n"
+    html += (
+        "<h2>Correlation Matrices</h2>\n\n"
         + matrix_styler.to_html()
         + "\n\n<h2>Brute Force - {}</h2>\n\n".format(response_text)
-        + cont_cont_brute_force_styler.to_html()
-        + "\n\n"
-        + cont_cat_brute_force_styler.to_html()
-        + "\n\n"
-        + cat_cat_brute_force_styler.to_html()
     )
+    if cont_predictor_start != len(predictors):
+        html += cont_cont_brute_force_styler.to_html() + "\n\n"
+    if cont_predictor_start != 0 and cont_predictor_start != len(predictors):
+        html += cont_cat_brute_force_styler.to_html() + "\n\n"
+    if cont_predictor_start > 1:
+        html += cat_cat_brute_force_styler.to_html() + "\n\n"
 
     with open("midterm_output/report.html", "w+") as file:
         file.write(html)

@@ -622,6 +622,8 @@ def main():
         }
     )
 
+    print(styler)
+
     html = styler.to_html()
 
     with open("output/report.html", "w+") as file:

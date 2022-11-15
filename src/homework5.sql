@@ -18,6 +18,8 @@ SELECT
 FROM team_batting_counts
 WHERE homeTeam = 0;
 
+CREATE INDEX away_team_batter_stats_game_id_idx ON away_team_batter_stats (game_id);
+
 DROP TABLE IF EXISTS home_team_batter_stats;
 
 CREATE TABLE home_team_batter_stats AS
@@ -36,6 +38,8 @@ SELECT
 FROM team_batting_counts
 WHERE homeTeam = 1;
 
+CREATE INDEX home_team_batter_stats_game_id_idx ON home_team_batter_stats (game_id);
+
 DROP TABLE IF EXISTS away_starting_pitcher_stats;
 
 CREATE TABLE away_starting_pitcher_stats AS
@@ -50,6 +54,8 @@ SELECT
 FROM pitcher_counts
 WHERE startingPitcher = 1
 AND homeTeam = 0;
+
+CREATE INDEX away_starting_pitcher_stats_game_id_idx ON away_starting_pitcher_stats (game_id);
 
 DROP TABLE IF EXISTS home_starting_pitcher_stats;
 
@@ -67,6 +73,8 @@ WHERE startingPitcher = 1
 AND homeTeam = 1;
 
 DROP TABLE IF EXISTS hw5_feature_stats;
+
+CREATE INDEX home_starting_pitcher_stats_game_id_idx ON home_starting_pitcher_stats (game_id);
 
 CREATE TABLE hw5_feature_stats AS
 SELECT

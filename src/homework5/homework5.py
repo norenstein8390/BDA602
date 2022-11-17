@@ -1,8 +1,11 @@
 import sys
 
 from homework4_main import Homework4ReportMaker
+from midterm_main import MidtermReportMaker
 from pyspark import StorageLevel
 from pyspark.sql import SparkSession
+from sklearn import svm, tree
+from sklearn.model_selection import train_test_split
 
 
 def main():
@@ -32,7 +35,7 @@ def main():
     pyspark_df.createOrReplaceTempView("batter_game_stats")
     pyspark_df.persist(StorageLevel.DISK_ONLY)
 
-    df = pyspark_df.toPandas()
+    df = pyspark_df.toPandas().dropna().reset_index()
 
     df["home_avg"] = df["home_avg"].astype("float")
     df["home_starter_baa"] = df["home_starter_baa"].astype("float")
@@ -57,6 +60,27 @@ def main():
 
     hw4_report_maker = Homework4ReportMaker(df, predictors, response)
     hw4_report_maker.make_plots_rankings()
+
+    midterm_report_maker = MidtermReportMaker(df, predictors, response)
+    midterm_report_maker.make_correlations_bruteforce()
+
+    X = df[predictors]
+    Y = df[response]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, Y, test_size=0.2, random_state=100
+    )
+
+    decision_tree = tree.DecisionTreeClassifier()
+    decision_tree = decision_tree.fit(X_train, y_train)
+    decision_tree_score = decision_tree.score(X_test, y_test)
+    print(f"decision tree score: {decision_tree_score}")
+
+    my_svm = svm.SVC()
+    my_svm = my_svm.fit(X_train, y_train)
+    svm_score = my_svm.score(X_test, y_test)
+    print(f"svm score: {svm_score}")
+
+    # SVM is better
 
 
 if __name__ == "__main__":

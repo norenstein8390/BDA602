@@ -1,5 +1,4 @@
 import os
-import webbrowser
 
 import pandas as pd
 from homework4_plots import Homework4Plotter
@@ -24,8 +23,9 @@ class Homework4ReportMaker:
         link = f"file:///{os.getcwd()}/homework5/hw4_output/figs/{name}.html"
         return f'<a href="{link}" target="_blank">{name}</a>'
 
-    def make_report(self, dict):
+    def make_html(self, dict):
         df = pd.DataFrame(dict)
+        df = df.sort_values(by=["MWR Weighted"], ascending=False)
 
         styler = df.style.format(
             {
@@ -39,14 +39,10 @@ class Homework4ReportMaker:
             }
         )
 
-        html = styler.to_html()
-
-        with open("homework5/hw4_output/report.html", "w+") as file:
-            file.write(html)
-        file.close()
-
-        filename = f"file:///{os.getcwd()}/homework5/hw4_output/report.html"
-        webbrowser.open_new_tab(filename)
+        html = "<h1>Homework 5 Report</h1>\n\n" + "<h2>Plots and Rankings</h2>\n\n"
+        html += styler.to_html()
+        html += "\n\n"
+        return html
 
     def make_plots_rankings(self):
         response_col = []
@@ -129,4 +125,4 @@ class Homework4ReportMaker:
             "MWR Plot": mwr_plot_col,
         }
 
-        self.make_report(data)
+        return self.make_html(data)

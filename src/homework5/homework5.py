@@ -1,4 +1,6 @@
+import os
 import sys
+import webbrowser
 
 from homework4_main import Homework4ReportMaker
 from midterm_main import MidtermReportMaker
@@ -6,6 +8,35 @@ from pyspark import StorageLevel
 from pyspark.sql import SparkSession
 from sklearn import svm, tree
 from sklearn.model_selection import train_test_split
+
+
+def test_models(df, predictors, response, models):
+    X = df[predictors]
+    Y = df[response]
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, Y, test_size=0.2, random_state=100
+    )
+    output = "\n\n<h2>Model Scores</h2>"
+    best_name = ""
+    best_score = 0
+
+    for i in range(len(models)):
+        model = models[i]
+        model = model.fit(X_train, y_train)
+        model_name = str(model)
+        model_score = model.score(X_test, y_test)
+
+        if model_score > best_score:
+            best_score = model_score
+            best_name = model_name
+
+        output += f"\n<h3>* {model_name} Score: {model_score}</h3>"
+
+    output += (
+        f"\n\n<h3>The best model tested was {best_name} (Score = {best_score})</h3>"
+    )
+
+    return output
 
 
 def main():
@@ -38,49 +69,39 @@ def main():
     df = pyspark_df.toPandas().dropna().reset_index()
 
     df["home_avg"] = df["home_avg"].astype("float")
-    df["home_starter_baa"] = df["home_starter_baa"].astype("float")
+    df["home_baa"] = df["home_baa"].astype("float")
     df["away_avg"] = df["away_avg"].astype("float")
-    df["away_starter_baa"] = df["away_starter_baa"].astype("float")
+    df["away_baa"] = df["away_baa"].astype("float")
 
     predictors = [
         "home_avg",
         "home_obp",
         "home_slg",
-        "home_starter_whip",
-        "home_starter_baa",
-        "home_starter_k",
+        "home_whip",
+        "home_baa",
+        "home_pitcher_k",
         "away_avg",
         "away_obp",
         "away_slg",
-        "away_starter_whip",
-        "away_starter_baa",
-        "away_starter_k",
+        "away_whip",
+        "away_baa",
+        "away_pitcher_k",
     ]
     response = "HomeTeamWins"
 
     hw4_report_maker = Homework4ReportMaker(df, predictors, response)
-    hw4_report_maker.make_plots_rankings()
-
+    hw4_html = hw4_report_maker.make_plots_rankings()
     midterm_report_maker = MidtermReportMaker(df, predictors, response)
-    midterm_report_maker.make_correlations_bruteforce()
+    midterm_html = midterm_report_maker.make_correlations_bruteforce()
+    models = [tree.DecisionTreeClassifier(), svm.SVC()]
+    model_html = test_models(df, predictors, response, models)
+    complete_html = hw4_html + midterm_html + model_html
 
-    X = df[predictors]
-    Y = df[response]
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, Y, test_size=0.2, random_state=100
-    )
-
-    decision_tree = tree.DecisionTreeClassifier()
-    decision_tree = decision_tree.fit(X_train, y_train)
-    decision_tree_score = decision_tree.score(X_test, y_test)
-    print(f"decision tree score: {decision_tree_score}")
-
-    my_svm = svm.SVC()
-    my_svm = my_svm.fit(X_train, y_train)
-    svm_score = my_svm.score(X_test, y_test)
-    print(f"svm score: {svm_score}")
-
-    # SVM is better
+    with open("homework5/report.html", "w+") as file:
+        file.write(complete_html)
+    file.close()
+    filename = f"file:///{os.getcwd()}/homework5/report.html"
+    webbrowser.open_new_tab(filename)
 
 
 if __name__ == "__main__":

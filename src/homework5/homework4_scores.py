@@ -21,13 +21,6 @@ class Homework4Scorer:
         temp_df = temp_df.dropna()
         x = temp_df[predictor_name]
 
-        unique_responses = temp_df[self.response].unique()
-        temp_df.loc[self.df[self.response] == unique_responses[0], self.response] = int(
-            0
-        )
-        temp_df.loc[self.df[self.response] == unique_responses[1], self.response] = int(
-            1
-        )
         y = temp_df[self.response].map(int)
 
         predictor = sm.add_constant(x)
@@ -39,7 +32,7 @@ class Homework4Scorer:
         fig.update_layout(
             title=f"Variable: {predictor_name}: (t-value={t_value}) (p-value={p_value})",
             xaxis_title=f"Variable: {predictor_name}",
-            yaxis_title=f"y - 0: {unique_responses[0]}, 1:{unique_responses[1]}",
+            yaxis_title="Response",
         )
         fig.write_html(
             f"homework5/hw4_output/figs/{predictor_name}_logistic_regression.html"
@@ -53,10 +46,6 @@ class Homework4Scorer:
                 self.response: self.df[self.response],
             }
         )
-
-        unique_responses = df[self.response].unique()
-        df.loc[df[self.response] == unique_responses[0], self.response] = 0
-        df.loc[df[self.response] == unique_responses[1], self.response] = 1
 
         df.sort_values(by=predictor_name)
 
@@ -132,8 +121,7 @@ class Homework4Scorer:
             go.Scatter(
                 x=bin_centers,
                 y=bin_means,
-                # y=bin_mean_minus_pop_mean,
-                name="\u03BC(i) - \u03BC(population)",
+                name="\u03BC(i)",
             ),
             secondary_y=True,
         )
@@ -155,7 +143,7 @@ class Homework4Scorer:
         fig.update_yaxes(title_text="Population", secondary_y=False)
 
         fig.update_yaxes(
-            title_text=f"Response- 0: {unique_responses[0]}, 1: {unique_responses[1]}",
+            title_text="Response",
             secondary_y=True,
             range=[min(response), max(response)],
         )

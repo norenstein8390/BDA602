@@ -87,7 +87,7 @@ class MidtermReportMaker:
             }
         )
 
-        html = "<h1>Midterm Report</h1>\n\n" + "<h2>Correlation</h2>\n\n"
+        html = "<h2>Correlation</h2>\n\n"
         html += cont_cont_styler.to_html() + "\n\n"
 
         html += (
@@ -98,4 +98,4 @@ class MidtermReportMaker:
 
         html += cont_cont_brute_force_styler.to_html() + "\n\n"
 
-        self.make_report(html)
+        return html

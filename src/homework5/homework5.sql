@@ -50,8 +50,8 @@ SELECT
 FROM pitcher_counts
 GROUP BY game_id, team_id;
 
-CREATE INDEX total_innings_per_game_game_id_idx ON total_innings_per_game (game_id)
-CREATE INDEX total_innings_per_game_team_id_idx ON total_innings_per_game (team_id)
+CREATE INDEX total_innings_per_game_game_id_idx ON total_innings_per_game (game_id);
+CREATE INDEX total_innings_per_game_team_id_idx ON total_innings_per_game (team_id);
 
 DROP TABLE IF EXISTS away_team_pitcher_stats;
 

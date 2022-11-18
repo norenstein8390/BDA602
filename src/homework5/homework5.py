@@ -10,7 +10,7 @@ from sklearn import svm, tree
 from sklearn.model_selection import train_test_split
 
 
-def test_models(df, predictors, response, models):
+def models_test(df, predictors, response, models):
     X = df[predictors]
     Y = df[response]
     X_train, X_test, y_train, y_test = train_test_split(
@@ -94,7 +94,7 @@ def main():
     midterm_report_maker = MidtermReportMaker(df, predictors, response)
     midterm_html = midterm_report_maker.make_correlations_bruteforce()
     models = [tree.DecisionTreeClassifier(), svm.SVC()]
-    model_html = test_models(df, predictors, response, models)
+    model_html = models_test(df, predictors, response, models)
     complete_html = hw4_html + midterm_html + model_html
 
     with open("homework5/report.html", "w+") as file:

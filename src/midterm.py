@@ -644,7 +644,7 @@ def cont_cat_diff_of_mean(df, cont_predictor_name, cat_predictor_name, response_
     cat_predictor = df[cat_predictor_name]
     response = df[response_name]
     pop_mean = np.mean(response)
-    num_bins_cont = 10
+    num_bins_cont = 9
     num_bins_cat = cat_predictor.nunique()
 
     min_value_cont = min(cont_predictor)
@@ -1056,7 +1056,7 @@ def main():
     if out_dir_exist is False:
         os.makedirs("midterm_output/figs")
 
-    test_data_set = get_test_data_set("titanic")
+    test_data_set = get_test_data_set("titanic_2")
     df = test_data_set[0]
     predictors = test_data_set[1]
     response = test_data_set[2]

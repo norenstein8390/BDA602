@@ -5,6 +5,7 @@ pyspark
 pyspark-stubs
 seaborn
 scipy
-sklearn
+scikit-learn
+sqlalchemy
 statsmodels
 typing

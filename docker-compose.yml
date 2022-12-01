@@ -25,7 +25,7 @@ services:
     container_name: baseball
     depends_on:
       - mariadb-nmo
-    restart: unless-stopped
+    restart: "no"
     volumes:
       - ./output:/output
     ports:

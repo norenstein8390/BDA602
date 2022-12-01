@@ -22,7 +22,11 @@ CREATE TABLE batter_rolling_date_stat AS
 SELECT
     bgs1.batter_id,
     bgs1.game_date,
-    SUM(bgs2.hit) / SUM(bgs2.AB) AS avg_over_last_100_days
+    CASE
+        WHEN SUM(bgs2.AB) = 0
+        THEN 0
+        ELSE SUM(bgs2.hit) / SUM(bgs2.AB)
+    END AS avg_over_last_100_days
 FROM batter_game_stat bgs1
 JOIN batter_game_stat bgs2
 ON bgs2.game_date

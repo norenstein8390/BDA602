@@ -23,6 +23,6 @@ COPY ./src/homework6/homework6.sql .
 COPY ./src/homework6/main_bash.sh .
 COPY baseball.sql .
 
-# Run app (added executable priviledge)
-RUN chmod +x ./main_bash.sh
+# Run app (added executable priviledge) - don't need anymore
+# RUN chmod +x ./main_bash.sh
 CMD ./main_bash.sh

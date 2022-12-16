@@ -2,10 +2,13 @@ import os
 import sys
 import webbrowser
 
+import pandas as pd
+import sqlalchemy
 from homework4_main import Homework4ReportMaker
 from midterm_main import MidtermReportMaker
-from pyspark import StorageLevel
-from pyspark.sql import SparkSession
+
+# from pyspark import StorageLevel
+# from pyspark.sql import SparkSession
 from sklearn import svm, tree
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -74,6 +77,7 @@ def models_test(df, predictors, response, models):
 
 
 def main():
+    '''
     spark = SparkSession.builder.master("local[*]").getOrCreate()
 
     database = "baseball"
@@ -101,6 +105,16 @@ def main():
     pyspark_df.persist(StorageLevel.DISK_ONLY)
 
     df = pyspark_df.toPandas().dropna().reset_index()
+    '''
+
+    user = "root"
+    password = "password123"  # pragma: allowlist secret
+    host = "mariadb:3306"
+    db = "baseball"
+    connection = f"mariadb-mariadbconnector://{user}:{password}@{host}/{db}"
+    engine = sqlalchemy.create_engine(connection)
+    sql_query = "SELECT * FROM final_features"
+    df = pd.read_sql_query(sql_query, engine)
 
     # home batters 107
     df["hba107_doubles"] = df["hba107_doubles"].astype("float")

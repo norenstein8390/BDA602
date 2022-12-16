@@ -12,8 +12,6 @@ services:
       - TZ=America/Los_Angeles
     volumes:
       - ./.db:/config
-    ports:
-      - "5100:3306"
     restart: unless-stopped
     networks:
       - network
@@ -28,8 +26,6 @@ services:
     restart: "no"
     volumes:
       - ./output:/output
-    ports:
-      - "5101:3307"
     networks:
       - network
 

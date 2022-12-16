@@ -27,6 +27,7 @@ COPY ./src/homework5/homework4_main.py .
 COPY ./src/homework5/homework4_plots.py .
 COPY ./src/homework5/homework4_scores.py .
 COPY ./src/homework5/midterm_bruteforce.py .
+COPY ./src/homework5/midterm_correlations.py .
 COPY ./src/homework5/midterm_main.py .
 COPY baseball.sql .
 

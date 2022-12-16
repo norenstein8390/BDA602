@@ -1,5 +1,5 @@
 #!/bin/sh
-sleep 10
+sleep 20
 
 if ! mariadb -u root -ppassword123 -h mariadb-nmo -e "USE baseball;"
 then
@@ -8,10 +8,10 @@ then
   mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < baseball.sql
 fi
 
-echo "database created"
+echo "database exists"
 echo "adding tables for final project"
-mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < make_constants_table.sql
-mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < final.sql
+#mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < make_constants_table.sql
+#mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < final.sql
 
 echo "generating output"
 python final.py

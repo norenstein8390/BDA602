@@ -1,5 +1,20 @@
 USE baseball;
 
+DROP TABLE IF EXISTS total_innings_per_game;
+
+CREATE TABLE total_innings_per_game
+SELECT
+    game_id,
+    team_id,
+    SUM(outsPlayed) / 3 AS IP
+FROM pitcher_counts
+GROUP BY game_id, team_id;
+
+CREATE INDEX total_innings_per_game_game_id_idx ON total_innings_per_game (game_id);
+CREATE INDEX total_innings_per_game_team_id_idx ON total_innings_per_game (team_id);
+
+------------------------------------------------------------------------------------------------------------------------
+
 DROP TABLE IF EXISTS batting_counting_stats;
 
 CREATE TABLE batting_counting_stats AS

@@ -107,14 +107,26 @@ def main():
     df = pyspark_df.toPandas().dropna().reset_index()
     '''
 
+    """
     user = "root"
     password = "password123"  # pragma: allowlist secret
     host = "mariadb:3306"
     db = "baseball"
     connection = f"mariadb-mariadbconnector://{user}:{password}@{host}/{db}"
     engine = sqlalchemy.create_engine(connection)
-    sql_query = "SELECT * FROM final_features"
-    df = pd.read_sql_query(sql_query, engine)
+    """
+
+    db_user = "root"
+    db_pass = "password123"  # pragma: allowlist secret
+    db_host = "mariadb-nmo:3306"
+    db_database = "baseball"
+    connect_string = f"mariadb+mariadbconnector://{db_user}:{db_pass}@{db_host}/{db_database}"  # pragma
+    sql_engine = sqlalchemy.create_engine(connect_string)
+    query = """SELECT * FROM final_features"""
+    df = pd.read_sql_query(query, sql_engine)
+
+    # sql_query = "SELECT * FROM final_features"
+    # df = pd.read_sql_query(sql_query, engine)
 
     # home batters 107
     df["hba107_doubles"] = df["hba107_doubles"].astype("float")

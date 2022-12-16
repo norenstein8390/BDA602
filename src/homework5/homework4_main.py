@@ -20,7 +20,9 @@ class Homework4ReportMaker:
             os.makedirs("final/hw4_output/figs")
 
     def make_clickable(self, name):
-        link = f"file:///{os.getcwd()}/final/hw4_output/figs/{name}.html"
+        # link = f"file:///{os.getcwd()}/final/hw4_output/figs/{name}.html"
+        # link = f"file:///src/final/hw4_output/figs/{name}.html"
+        link = f"hw4_output/figs/{name}.html"
         return f'<a href="{link}" target="_blank">{name}</a>'
 
     def make_html(self, dict):

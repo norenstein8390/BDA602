@@ -78,9 +78,9 @@ def main():
     password = "password123"  # pragma: allowlist secret
     host = "mariadb-nmo:3306"
     db = "baseball"
-    connection = f"mariadb-mariadbconnector://{user}:{password}@{host}/{db}"
+    connection = f"mariadb+mariadbconnector://{user}:{password}@{host}/{db}"
     engine = sqlalchemy.create_engine(connection)
-    sql_query = "SELECT * FROM final_features"
+    sql_query = """SELECT * FROM final_features"""
     df = pd.read_sql_query(sql_query, engine)
 
     # home batters 107

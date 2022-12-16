@@ -19,7 +19,9 @@ class MidtermReportMaker:
             os.makedirs("final/midterm_output/figs")
 
     def make_clickable(self, name):
-        link = f"file:///{os.getcwd()}/final/midterm_output/figs/{name}.html"
+        # link = f"file:///{os.getcwd()}/final/midterm_output/figs/{name}.html"
+        # link = f"file:///src/final/midterm_output/figs/{name}.html"
+        link = f"midterm_output/figs/{name}.html"
         return f'<a href="{link}" target="_blank">{name}</a>'
 
     def make_report(self, html):

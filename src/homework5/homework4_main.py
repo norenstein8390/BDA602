@@ -25,7 +25,7 @@ class Homework4ReportMaker:
 
     def make_html(self, dict):
         df = pd.DataFrame(dict)
-        df = df.sort_values(by=["MWR Weighted"], ascending=False)
+        df = df.sort_values(by=["t-score abs"], ascending=False)
 
         styler = df.style.format(
             {
@@ -117,6 +117,7 @@ class Homework4ReportMaker:
             "Distribution Plot": distribution_plot_col,
             "Violin Plot": violin_plot_col,
             "t-score": t_score_col,
+            "t-score abs": [abs(score) for score in t_score_col],
             "p-value": p_value_col,
             "Logistic Regression Plot": logistic_regression_col,
             "RF VarImp": rf_var_imp_col,

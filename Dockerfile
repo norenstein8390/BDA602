@@ -19,9 +19,10 @@ COPY requirements.txt .
 RUN pip3 install --compile --no-cache-dir -r requirements.txt
 
 # Copy over code
-COPY ./src/homework6/homework6.sql .
+#COPY ./src/homework6/homework6.sql .
 COPY ./src/homework6/main_bash.sh .
-COPY baseball.sql .
+#COPY baseball.sql .
+COPY helloworld.py .
 
 # Run app (added executable priviledge)
 RUN chmod +x ./main_bash.sh

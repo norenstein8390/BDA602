@@ -50,6 +50,8 @@ SELECT
     ap.BAA AS away_BAA,
     hp.FIP AS home_FIP,
     ap.FIP AS away_FIP,
+    hp.KBB AS home_KBB,
+    ap.KBB AS away_KBB,
     hb10.H9 AS home_batters10_H9,
     ab10.H9 AS away_batters10_H9,
     hb10.doubles9 AS home_batters10_doubles9,
@@ -92,6 +94,8 @@ SELECT
     ap10.BAA AS away10_BAA,
     hp10.FIP AS home10_FIP,
     ap10.FIP AS away10_FIP,
+    hp10.KBB AS home10_KBB,
+    ap10.KBB AS away10_KBB,
     CASE
         WHEN bs.winner_home_or_away = 'H'
             THEN 1
@@ -145,6 +149,7 @@ SELECT
     hp.WHIP - ap.WHIP AS diff_WHIP,
     hp.BAA - ap.BAA AS diff_BAA,
     hp.FIP - ap.FIP AS diff_FIP,
+    hp.KBB - ap.KBB AS diff_KBB,
     hb10.H9 - ab10.H9 AS diff_batters10_H9,
     hb10.doubles9 - ab10.doubles9 AS diff_batters10_doubles9,
     hb10.triples9 - ab10.triples9 AS diff_batters10_triples9,
@@ -166,6 +171,7 @@ SELECT
     hp10.WHIP - ap10.WHIP AS diff10_WHIP,
     hp10.BAA - ap10.BAA AS diff10_BAA,
     hp10.FIP - ap10.FIP AS diff10_FIP,
+    hp10.KBB - ap10.KBB AS diff10_KBB,
     CASE
         WHEN bs.winner_home_or_away = 'H'
             THEN 1

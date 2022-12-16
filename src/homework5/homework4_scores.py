@@ -27,7 +27,7 @@ class Homework4Scorer:
         logistic_regression_model = sm.Logit(np.asarray(y), np.asarray(predictor))
         logistic_regression_model_fitted = logistic_regression_model.fit()
         t_value = round(logistic_regression_model_fitted.tvalues[1], 6)
-        p_value = "{:6e}".format(logistic_regression_model_fitted.pvalues[1])
+        p_value = round(logistic_regression_model_fitted.pvalues[1], 6)
         fig = px.scatter(x=x, y=y, trendline="ols")
         fig.update_layout(
             title=f"Variable: {predictor_name}: (t-value={t_value}) (p-value={p_value})",
@@ -47,7 +47,8 @@ class Homework4Scorer:
             }
         )
 
-        df.sort_values(by=predictor_name)
+        df = df.sort_values(by=predictor_name)
+        df = df.reset_index()
 
         predictor = df[predictor_name]
         response = df[self.response]
@@ -94,6 +95,70 @@ class Homework4Scorer:
                     bin_responses[bin_num] += cur_response
                     break
 
+        if (
+            bin_counts[0] / len(predictor) < 0.05
+            or bin_counts[9] / len(predictor) < 0.05
+        ):
+            print(predictor)
+            print(predictor[0])
+            first_bin_end = predictor[int(len(predictor) * 0.05)]
+            last_bin_start = predictor[int(len(predictor) * 0.95)]
+            full_width = abs(last_bin_start - first_bin_end)
+            bin_width = full_width / 8
+            lower_bins = [min_value, first_bin_end]
+            upper_bins = [first_bin_end]
+            bin_centers = [
+                (min_value + first_bin_end) / 2,
+                first_bin_end + bin_width / 2,
+            ]
+            widths = [
+                abs(first_bin_end - min_value),
+                bin_width,
+                bin_width,
+                bin_width,
+                bin_width,
+                bin_width,
+                bin_width,
+                bin_width,
+                bin_width,
+                abs(max_value - last_bin_start),
+            ]
+
+            for i in range(7):
+                lower_bins.append(lower_bins[i + 1] + bin_width)
+                upper_bins.append(upper_bins[i] + bin_width)
+                bin_centers.append(bin_centers[i + 1] + bin_width)
+
+            lower_bins.append(last_bin_start)
+            upper_bins.append(last_bin_start)
+            upper_bins.append(max_value)
+            bin_centers.append(last_bin_start + abs(max_value - last_bin_start) / 2)
+
+            bin_counts = np.repeat(0, num_bins)
+            bin_responses = np.repeat(0, num_bins)
+            print(lower_bins)
+            print(upper_bins)
+            print(bin_centers)
+
+            for i in range(len(predictor)):
+                cur_val = predictor[i]
+                cur_response = response[i]
+
+                for bin_num in range(num_bins):
+                    if (
+                        cat_check is False
+                        and bin_num > 0
+                        and cur_val >= lower_bins[bin_num]
+                        and cur_val <= upper_bins[bin_num]
+                    ) or (
+                        cat_check is False
+                        and cur_val >= lower_bins[bin_num]
+                        and cur_val < upper_bins[bin_num]
+                    ):
+                        bin_counts[bin_num] += 1
+                        bin_responses[bin_num] += cur_response
+                        break
+
         population_mean = np.mean(response)
 
         for i in range(num_bins):
@@ -113,7 +178,7 @@ class Homework4Scorer:
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
         fig.add_trace(
-            go.Bar(x=bin_centers, y=bin_counts, name="Population"),
+            go.Bar(x=bin_centers, y=bin_counts, width=widths, name="Population"),
             secondary_y=False,
         )
 

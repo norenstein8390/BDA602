@@ -6,6 +6,5 @@ pyspark-stubs
 seaborn
 scipy
 scikit-learn
-sqlalchemy
 statsmodels
 typing

@@ -44,7 +44,12 @@ SELECT
     SUM(p2.HR) * 9 / SUM(p2.innings) AS HR9,
     (SUM(p2.H) + SUM(p2.BB)) / SUM(p2.innings) AS WHIP,
     SUM(p2.H) / SUM(p2.AB) AS BAA,
-    (13 * SUM(p2.HR) + 3 * (SUM(p2.HBP) + SUM(p2.BB)) - 2 * SUM(p2.K)) / SUM(p2.innings) + c.cFIP AS FIP
+    (13 * SUM(p2.HR) + 3 * (SUM(p2.HBP) + SUM(p2.BB)) - 2 * SUM(p2.K)) / SUM(p2.innings) + c.cFIP AS FIP,
+    CASE
+        WHEN SUM(p2.BB) = 0
+            THEN SUM(p2.K) / (1/27)
+        ELSE SUM(p2.K) / SUM(p2.BB)
+    END AS KBB
 FROM final_pitching_counting_stats p1
 JOIN final_pitching_counting_stats p2
     ON (p2.local_date < p1.local_date
@@ -89,7 +94,12 @@ SELECT
     SUM(p2.HR) * 9 / SUM(p2.innings) AS HR9,
     (SUM(p2.H) + SUM(p2.BB)) / SUM(p2.innings) AS WHIP,
     SUM(p2.H) / SUM(p2.AB) AS BAA,
-    (13 * SUM(p2.HR) + 3 * (SUM(p2.HBP) + SUM(p2.BB)) - 2 * SUM(p2.K)) / SUM(p2.innings) + c.cFIP AS FIP
+    (13 * SUM(p2.HR) + 3 * (SUM(p2.HBP) + SUM(p2.BB)) - 2 * SUM(p2.K)) / SUM(p2.innings) + c.cFIP AS FIP,
+    CASE
+        WHEN SUM(p2.BB) = 0
+            THEN SUM(p2.K) / (1/27)
+        ELSE SUM(p2.K) / SUM(p2.BB)
+    END AS KBB
 FROM final_pitching_counting_stats p1
 JOIN final_pitching_counting_stats p2
     ON p2.local_date

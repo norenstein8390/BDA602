@@ -7,8 +7,19 @@ from midterm_main import MidtermReportMaker
 from pyspark import StorageLevel
 from pyspark.sql import SparkSession
 from sklearn import svm, tree
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
+from sklearn.ensemble import (
+    AdaBoostClassifier,
+    GradientBoostingClassifier,
+    RandomForestClassifier,
+)
 from sklearn.linear_model import LogisticRegression, SGDClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
+    matthews_corrcoef,
+    precision_score,
+    recall_score,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
@@ -17,24 +28,43 @@ from sklearn.neighbors import KNeighborsClassifier
 def models_test(df, predictors, response, models):
     X = df[predictors]
     Y = df[response]
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, Y, test_size=0.2, shuffle=False, random_state=None
-    )
     output = "\n\n<h2>Model Scores</h2>"
     best_name = ""
     best_score = 0
 
+    sizes = [0.2, 0.4, 0.6, 0.8]
+
     for i in range(len(models)):
-        model = models[i]
-        model = model.fit(X_train, y_train)
-        model_name = str(model)
-        model_score = model.score(X_test, y_test)
+        for size in sizes:
+            X_train, X_test, y_train, y_test = train_test_split(
+                X,
+                Y,
+                test_size=size,
+                shuffle=False,
+                random_state=None,
+            )
 
-        if model_score > best_score:
-            best_score = model_score
-            best_name = model_name
+            model = models[i]
+            model = model.fit(X_train, y_train)
+            model_name = str(model)
+            model_score = model.score(X_test, y_test)
 
-        output += f"\n<h3>* {model_name} Score: {model_score}</h3>"
+            y_pred = model.predict(X_test)
+            precision = precision_score(y_test, y_pred)
+            recall = recall_score(y_test, y_pred)
+            accuracy = accuracy_score(y_test, y_pred)
+            f1 = f1_score(y_test, y_pred)
+            matthews = matthews_corrcoef(y_test, y_pred)
+
+            if model_score > best_score:
+                best_score = model_score
+                best_name = model_name
+
+            output += f"\n<h3>Test_size: {size}</h3>"
+            output += (
+                f"\n<h3>* {model_name} Score: {model_score} Precision: {precision} Recall: {recall} Accuracy: "
+                f"{accuracy} F1: {f1} Matthews: {matthews}</h3>"
+            )
 
     output += (
         f"\n\n<h3>The best model tested was {best_name} (Score = {best_score})</h3>"
@@ -55,7 +85,7 @@ def main():
     jdbc_url = f"jdbc:mysql://{server}:{port}/{database}?permitMysqlScheme"
     jdbc_driver = "org.mariadb.jdbc.Driver"
 
-    sql_query = """SELECT * FROM final"""
+    sql_query = """SELECT * FROM final_features"""
 
     pyspark_df = (
         spark.read.format("jdbc")
@@ -72,231 +102,349 @@ def main():
 
     df = pyspark_df.toPandas().dropna().reset_index()
 
-    df["home_batters_H9"] = df["home_batters_H9"].astype("float")
-    df["away_batters_H9"] = df["away_batters_H9"].astype("float")
-    df["home_batters_doubles9"] = df["home_batters_doubles9"].astype("float")
-    df["away_batters_doubles9"] = df["away_batters_doubles9"].astype("float")
-    df["home_batters_triples9"] = df["home_batters_triples9"].astype("float")
-    df["away_batters_triples9"] = df["away_batters_triples9"].astype("float")
-    df["home_batters_HR9"] = df["home_batters_HR9"].astype("float")
-    df["away_batters_HR9"] = df["away_batters_HR9"].astype("float")
-    df["home_batters_BB9"] = df["home_batters_BB9"].astype("float")
-    df["away_batters_BB9"] = df["away_batters_BB9"].astype("float")
-    df["home_batters_K9"] = df["home_batters_K9"].astype("float")
-    df["away_batters_K9"] = df["away_batters_K9"].astype("float")
-    df["home_batters_R9"] = df["home_batters_R9"].astype("float")
-    df["away_batters_R9"] = df["away_batters_R9"].astype("float")
-    df["home_RDIFF9"] = df["home_RDIFF9"].astype("float")
-    df["away_RDIFF9"] = df["away_RDIFF9"].astype("float")
-    df["home_BA"] = df["home_BA"].astype("float")
-    df["away_BA"] = df["away_BA"].astype("float")
-    df["home_OBP"] = df["home_OBP"].astype("float")
-    df["away_OBP"] = df["away_OBP"].astype("float")
-    df["home_SLG"] = df["home_SLG"].astype("float")
-    df["away_SLG"] = df["away_SLG"].astype("float")
-    df["home_OPS"] = df["home_OPS"].astype("float")
-    df["away_OPS"] = df["away_OPS"].astype("float")
-    df["home_wOBA"] = df["home_wOBA"].astype("float")
-    df["away_wOBA"] = df["away_wOBA"].astype("float")
-    df["home_pitchers_H9"] = df["home_pitchers_H9"].astype("float")
-    df["away_pitchers_H9"] = df["away_pitchers_H9"].astype("float")
-    df["home_pitchers_R9"] = df["home_pitchers_R9"].astype("float")
-    df["away_pitchers_R9"] = df["away_pitchers_R9"].astype("float")
-    df["home_pitchers_BB9"] = df["home_pitchers_BB9"].astype("float")
-    df["away_pitchers_BB9"] = df["away_pitchers_BB9"].astype("float")
-    df["home_pitchers_K9"] = df["home_pitchers_K9"].astype("float")
-    df["away_pitchers_K9"] = df["away_pitchers_K9"].astype("float")
-    df["home_pitchers_HR9"] = df["home_pitchers_HR9"].astype("float")
-    df["away_pitchers_HR9"] = df["away_pitchers_HR9"].astype("float")
-    df["home_WHIP"] = df["home_WHIP"].astype("float")
-    df["away_WHIP"] = df["away_WHIP"].astype("float")
-    df["home_BAA"] = df["home_BAA"].astype("float")
-    df["away_BAA"] = df["away_BAA"].astype("float")
-    df["home_FIP"] = df["home_FIP"].astype("float")
-    df["away_FIP"] = df["away_FIP"].astype("float")
-    df["home_batters10_H9"] = df["home_batters10_H9"].astype("float")
-    df["away_batters10_H9"] = df["away_batters10_H9"].astype("float")
-    df["home_batters10_doubles9"] = df["home_batters10_doubles9"].astype("float")
-    df["away_batters10_doubles9"] = df["away_batters10_doubles9"].astype("float")
-    df["home_batters10_triples9"] = df["home_batters10_triples9"].astype("float")
-    df["away_batters10_triples9"] = df["away_batters10_triples9"].astype("float")
-    df["home_batters10_HR9"] = df["home_batters10_HR9"].astype("float")
-    df["away_batters10_HR9"] = df["away_batters10_HR9"].astype("float")
-    df["home_batters10_BB9"] = df["home_batters10_BB9"].astype("float")
-    df["away_batters10_BB9"] = df["away_batters10_BB9"].astype("float")
-    df["home_batters10_K9"] = df["home_batters10_K9"].astype("float")
-    df["away_batters10_K9"] = df["away_batters10_K9"].astype("float")
-    df["home_batters10_R9"] = df["home_batters10_R9"].astype("float")
-    df["away_batters10_R9"] = df["away_batters10_R9"].astype("float")
-    df["home10_RDIFF9"] = df["home10_RDIFF9"].astype("float")
-    df["away10_RDIFF9"] = df["away10_RDIFF9"].astype("float")
-    df["home10_BA"] = df["home10_BA"].astype("float")
-    df["away10_BA"] = df["away10_BA"].astype("float")
-    df["home10_OBP"] = df["home10_OBP"].astype("float")
-    df["away10_OBP"] = df["away10_OBP"].astype("float")
-    df["home10_SLG"] = df["home10_SLG"].astype("float")
-    df["away10_SLG"] = df["away10_SLG"].astype("float")
-    df["home10_OPS"] = df["home10_OPS"].astype("float")
-    df["away10_OPS"] = df["away10_OPS"].astype("float")
-    df["home10_wOBA"] = df["home10_wOBA"].astype("float")
-    df["away10_wOBA"] = df["away10_wOBA"].astype("float")
-    df["home_pitchers10_H9"] = df["home_pitchers10_H9"].astype("float")
-    df["away_pitchers10_H9"] = df["away_pitchers10_H9"].astype("float")
-    df["home_pitchers10_R9"] = df["home_pitchers10_R9"].astype("float")
-    df["away_pitchers10_R9"] = df["away_pitchers10_R9"].astype("float")
-    df["home_pitchers10_BB9"] = df["home_pitchers10_BB9"].astype("float")
-    df["away_pitchers10_BB9"] = df["away_pitchers10_BB9"].astype("float")
-    df["home_pitchers10_K9"] = df["home_pitchers10_K9"].astype("float")
-    df["away_pitchers10_K9"] = df["away_pitchers10_K9"].astype("float")
-    df["home_pitchers10_HR9"] = df["home_pitchers10_HR9"].astype("float")
-    df["away_pitchers10_HR9"] = df["away_pitchers10_HR9"].astype("float")
-    df["home10_WHIP"] = df["home10_WHIP"].astype("float")
-    df["away10_WHIP"] = df["away10_WHIP"].astype("float")
-    df["home10_BAA"] = df["home10_BAA"].astype("float")
-    df["away10_BAA"] = df["away10_BAA"].astype("float")
-    df["home10_FIP"] = df["home10_FIP"].astype("float")
-    df["away10_FIP"] = df["away10_FIP"].astype("float")
+    # home batters 107
+    df["hba107_doubles"] = df["hba107_doubles"].astype("float")
+    df["hba107_triples"] = df["hba107_triples"].astype("float")
+    df["hba107_HR"] = df["hba107_HR"].astype("float")
+    df["hba107_BB"] = df["hba107_BB"].astype("float")
+    df["hba107_K"] = df["hba107_K"].astype("float")
+    df["hba107_R"] = df["hba107_R"].astype("float")
+    df["hba107_wOBA"] = df["hba107_wOBA"].astype("float")
+    df["hba107_BA"] = df["hba107_BA"].astype("float")
+    df["hba107_OBP"] = df["hba107_OBP"].astype("float")
+    df["hba107_SLG"] = df["hba107_SLG"].astype("float")
+    df["hba107_OPS"] = df["hba107_OPS"].astype("float")
+    df["h107_RDIFF"] = df["h107_RDIFF"].astype("float")
+
+    # home starters 107
+    df["hsp107_BB"] = df["hsp107_BB"].astype("float")
+    df["hsp107_K"] = df["hsp107_K"].astype("float")
+    df["hsp107_HR"] = df["hsp107_HR"].astype("float")
+    df["hsp107_WHIP"] = df["hsp107_WHIP"].astype("float")
+    df["hsp107_BAA"] = df["hsp107_BAA"].astype("float")
+    df["hsp107_FIP"] = df["hsp107_FIP"].astype("float")
+    df["hsp107_KBB"] = df["hsp107_KBB"].astype("float")
+    df["hsp107_IP"] = df["hsp107_IP"].astype("float")
+    df["hsp107_PT"] = df["hsp107_PT"].astype("float")
+    df["h107_RA"] = df["h107_RA"].astype("float")
+
+    # home bullpen 107
+    df["hbp107_BB"] = df["hbp107_BB"].astype("float")
+    df["hbp107_K"] = df["hbp107_K"].astype("float")
+    df["hbp107_HR"] = df["hbp107_HR"].astype("float")
+    df["hbp107_WHIP"] = df["hbp107_WHIP"].astype("float")
+    df["hbp107_BAA"] = df["hbp107_BAA"].astype("float")
+    df["hbp107_FIP"] = df["hbp107_FIP"].astype("float")
+    df["hbp107_KBB"] = df["hbp107_KBB"].astype("float")
+    df["hbp107_IP"] = df["hbp107_IP"].astype("float")
+    df["hbp107_PT"] = df["hbp107_PT"].astype("float")
+
+    # away batters 107
+    df["aba107_doubles"] = df["aba107_doubles"].astype("float")
+    df["aba107_triples"] = df["aba107_triples"].astype("float")
+    df["aba107_HR"] = df["aba107_HR"].astype("float")
+    df["aba107_BB"] = df["aba107_BB"].astype("float")
+    df["aba107_K"] = df["aba107_K"].astype("float")
+    df["aba107_R"] = df["aba107_R"].astype("float")
+    df["aba107_wOBA"] = df["aba107_wOBA"].astype("float")
+    df["aba107_BA"] = df["aba107_BA"].astype("float")
+    df["aba107_OBP"] = df["aba107_OBP"].astype("float")
+    df["aba107_SLG"] = df["aba107_SLG"].astype("float")
+    df["aba107_OPS"] = df["aba107_OPS"].astype("float")
+    df["a107_RDIFF"] = df["a107_RDIFF"].astype("float")
+
+    # away starters 107
+    df["asp107_BB"] = df["asp107_BB"].astype("float")
+    df["asp107_K"] = df["asp107_K"].astype("float")
+    df["asp107_HR"] = df["asp107_HR"].astype("float")
+    df["asp107_WHIP"] = df["asp107_WHIP"].astype("float")
+    df["asp107_BAA"] = df["asp107_BAA"].astype("float")
+    df["asp107_FIP"] = df["asp107_FIP"].astype("float")
+    df["asp107_KBB"] = df["asp107_KBB"].astype("float")
+    df["asp107_IP"] = df["asp107_IP"].astype("float")
+    df["asp107_PT"] = df["asp107_PT"].astype("float")
+    df["a107_RA"] = df["a107_RA"].astype("float")
+
+    # away bullpen 107
+    df["abp107_BB"] = df["abp107_BB"].astype("float")
+    df["abp107_K"] = df["abp107_K"].astype("float")
+    df["abp107_HR"] = df["abp107_HR"].astype("float")
+    df["abp107_WHIP"] = df["abp107_WHIP"].astype("float")
+    df["abp107_BAA"] = df["abp107_BAA"].astype("float")
+    df["abp107_FIP"] = df["abp107_FIP"].astype("float")
+    df["abp107_KBB"] = df["abp107_KBB"].astype("float")
+    df["abp107_IP"] = df["abp107_IP"].astype("float")
+    df["abp107_PT"] = df["abp107_PT"].astype("float")
+
+    # diff batters 107
+    df["dba107_doubles"] = df["dba107_doubles"].astype("float")
+    df["dba107_triples"] = df["dba107_triples"].astype("float")
+    df["dba107_HR"] = df["dba107_HR"].astype("float")
+    df["dba107_BB"] = df["dba107_BB"].astype("float")
+    df["dba107_K"] = df["dba107_K"].astype("float")
+    df["dba107_R"] = df["dba107_R"].astype("float")
+    df["dba107_wOBA"] = df["dba107_wOBA"].astype("float")
+    df["dba107_BA"] = df["dba107_BA"].astype("float")
+    df["dba107_OBP"] = df["dba107_OBP"].astype("float")
+    df["dba107_SLG"] = df["dba107_SLG"].astype("float")
+    df["dba107_OPS"] = df["dba107_OPS"].astype("float")
+    df["d107_RDIFF"] = df["d107_RDIFF"].astype("float")
+
+    # diff starters 107
+    df["dsp107_BB"] = df["dsp107_BB"].astype("float")
+    df["dsp107_K"] = df["dsp107_K"].astype("float")
+    df["dsp107_HR"] = df["dsp107_HR"].astype("float")
+    df["dsp107_WHIP"] = df["dsp107_WHIP"].astype("float")
+    df["dsp107_BAA"] = df["dsp107_BAA"].astype("float")
+    df["dsp107_FIP"] = df["dsp107_FIP"].astype("float")
+    df["dsp107_KBB"] = df["dsp107_KBB"].astype("float")
+    df["dsp107_IP"] = df["dsp107_IP"].astype("float")
+    df["dsp107_PT"] = df["dsp107_PT"].astype("float")
+    df["d107_RA"] = df["d107_RA"].astype("float")
+
+    # diff bullpen 107
+    df["dbp107_BB"] = df["dbp107_BB"].astype("float")
+    df["dbp107_K"] = df["dbp107_K"].astype("float")
+    df["dbp107_HR"] = df["dbp107_HR"].astype("float")
+    df["dbp107_WHIP"] = df["dbp107_WHIP"].astype("float")
+    df["dbp107_BAA"] = df["dbp107_BAA"].astype("float")
+    df["dbp107_FIP"] = df["dbp107_FIP"].astype("float")
+    df["dbp107_KBB"] = df["dbp107_KBB"].astype("float")
+    df["dbp107_IP"] = df["dbp107_IP"].astype("float")
+    df["dbp107_PT"] = df["dbp107_PT"].astype("float")
 
     predictors = [
-        "home_batters_H9",
-        "away_batters_H9",
-        "home_batters_doubles9",
-        "away_batters_doubles9",
-        "home_batters_triples9",
-        "away_batters_triples9",
-        "home_batters_HR9",
-        "away_batters_HR9",
-        "home_batters_BB9",
-        "away_batters_BB9",
-        "home_batters_K9",
-        "away_batters_K9",
-        "home_batters_R9",
-        "away_batters_R9",
-        "home_RDIFF9",
-        "away_RDIFF9",
-        "home_BA",
-        "away_BA",
-        "home_OBP",
-        "away_OBP",
-        "home_SLG",
-        "away_SLG",
-        "home_OPS",
-        "away_OPS",
-        "home_wOBA",
-        "away_wOBA",
-        "home_pitchers_H9",
-        "away_pitchers_H9",
-        "home_pitchers_R9",
-        "away_pitchers_R9",
-        "home_pitchers_BB9",
-        "away_pitchers_BB9",
-        "home_pitchers_K9",
-        "away_pitchers_K9",
-        "home_pitchers_HR9",
-        "away_pitchers_HR9",
-        "home_WHIP",
-        "away_WHIP",
-        "home_BAA",
-        "away_BAA",
-        "home_FIP",
-        "away_FIP",
-        "home_batters10_H9",
-        "away_batters10_H9",
-        "home_batters10_doubles9",
-        "away_batters10_doubles9",
-        "home_batters10_triples9",
-        "away_batters10_triples9",
-        "home_batters10_HR9",
-        "away_batters10_HR9",
-        "home_batters10_BB9",
-        "away_batters10_BB9",
-        "home_batters10_K9",
-        "away_batters10_K9",
-        "home_batters10_R9",
-        "away_batters10_R9",
-        "home10_RDIFF9",
-        "away10_RDIFF9",
-        "home10_BA",
-        "away10_BA",
-        "home10_OBP",
-        "away10_OBP",
-        "home10_SLG",
-        "away10_SLG",
-        "home10_OPS",
-        "away10_OPS",
-        "home10_wOBA",
-        "away10_wOBA",
-        "home_pitchers10_H9",
-        "away_pitchers10_H9",
-        "home_pitchers10_R9",
-        "away_pitchers10_R9",
-        "home_pitchers10_BB9",
-        "away_pitchers10_BB9",
-        "home_pitchers10_K9",
-        "away_pitchers10_K9",
-        "home_pitchers10_HR9",
-        "away_pitchers10_HR9",
-        "home10_WHIP",
-        "away10_WHIP",
-        "home10_BAA",
-        "away10_BAA",
-        "home10_FIP",
-        "away10_FIP",
+        "hba107_doubles",
+        "hba107_triples",
+        "hba107_HR",
+        "hba107_BB",
+        "hba107_K",
+        "hba107_R",
+        "hba107_wOBA",
+        "hba107_BA",
+        "hba107_OBP",
+        "hba107_SLG",
+        "hba107_OPS",
+        "h107_RDIFF",
+        "hsp107_BB",
+        "hsp107_K",
+        "hsp107_HR",
+        "hsp107_WHIP",
+        "hsp107_BAA",
+        "hsp107_FIP",
+        "hsp107_KBB",
+        "hsp107_IP",
+        "hsp107_PT",
+        "h107_RA",
+        "hbp107_BB",
+        "hbp107_K",
+        "hbp107_HR",
+        "hbp107_WHIP",
+        "hbp107_BAA",
+        "hbp107_FIP",
+        "hbp107_KBB",
+        "hbp107_IP",
+        "hbp107_PT",
+        "aba107_doubles",
+        "aba107_triples",
+        "aba107_HR",
+        "aba107_BB",
+        "aba107_K",
+        "aba107_R",
+        "aba107_wOBA",
+        "aba107_BA",
+        "aba107_OBP",
+        "aba107_SLG",
+        "aba107_OPS",
+        "a107_RDIFF",
+        "asp107_BB",
+        "asp107_K",
+        "asp107_HR",
+        "asp107_WHIP",
+        "asp107_BAA",
+        "asp107_FIP",
+        "asp107_KBB",
+        "asp107_IP",
+        "asp107_PT",
+        "a107_RA",
+        "abp107_BB",
+        "abp107_K",
+        "abp107_HR",
+        "abp107_WHIP",
+        "abp107_BAA",
+        "abp107_FIP",
+        "abp107_KBB",
+        "abp107_IP",
+        "abp107_PT",
+        "dba107_doubles",
+        "dba107_triples",
+        "dba107_HR",
+        "dba107_BB",
+        "dba107_K",
+        "dba107_R",
+        "dba107_wOBA",
+        "dba107_BA",
+        "dba107_OBP",
+        "dba107_SLG",
+        "dba107_OPS",
+        "d107_RDIFF",
+        "dsp107_BB",
+        "dsp107_K",
+        "dsp107_HR",
+        "dsp107_WHIP",
+        "dsp107_BAA",
+        "dsp107_FIP",
+        "dsp107_KBB",
+        "dsp107_IP",
+        "dsp107_PT",
+        "d107_RA",
+        "dbp107_BB",
+        "dbp107_K",
+        "dbp107_HR",
+        "dbp107_WHIP",
+        "dbp107_BAA",
+        "dbp107_FIP",
+        "dbp107_KBB",
+        "dbp107_IP",
+        "dbp107_PT",
     ]
-    """
-
-    df["diff_batters_H9"] = df["diff_batters_H9"].astype("float")
-    df["diff_batters_doubles9"] = df["diff_batters_doubles9"].astype("float")
-    df["diff_batters_triples9"] = df["diff_batters_triples9"].astype("float")
-    df["diff_batters_HR9"] = df["diff_batters_HR9"].astype("float")
-    df["diff_batters_BB9"] = df["diff_batters_BB9"].astype("float")
-    df["diff_batters_K9"] = df["diff_batters_K9"].astype("float")
-    df["diff_batters_R9"] = df["diff_batters_R9"].astype("float")
-    df["diff_RDIFF9"] = df["diff_RDIFF9"].astype("float")
-    df["diff_BA"] = df["diff_BA"].astype("float")
-    df["diff_OBP"] = df["diff_OBP"].astype("float")
-    df["diff_SLG"] = df["diff_SLG"].astype("float")
-    df["diff_OPS"] = df["diff_OPS"].astype("float")
-    df["diff_wOBA"] = df["diff_wOBA"].astype("float")
-    df["diff_pitchers_H9"] = df["diff_pitchers_H9"].astype("float")
-    df["diff_pitchers_R9"] = df["diff_pitchers_R9"].astype("float")
-    df["diff_pitchers_BB9"] = df["diff_pitchers_BB9"].astype("float")
-    df["diff_pitchers_K9"] = df["diff_pitchers_K9"].astype("float")
-    df["diff_pitchers_HR9"] = df["diff_pitchers_HR9"].astype("float")
-    df["diff_WHIP"] = df["diff_WHIP"].astype("float")
-    df["diff_BAA"] = df["diff_BAA"].astype("float")
-    df["diff_FIP"] = df["diff_FIP"].astype("float")
-    df["diff_batters10_H9"] = df["diff_batters10_H9"].astype("float")
-    df["diff_batters10_doubles9"] = df["diff_batters10_doubles9"].astype("float")
-    df["diff_batters10_triples9"] = df["diff_batters10_triples9"].astype("float")
-    df["diff_batters10_HR9"] = df["diff_batters10_HR9"].astype("float")
-    df["diff_batters10_BB9"] = df["diff_batters10_BB9"].astype("float")
-    df["diff_batters10_K9"] = df["diff_batters10_K9"].astype("float")
-    df["diff_batters10_R9"] = df["diff_batters10_R9"].astype("float")
-    df["diff10_RDIFF9"] = df["diff10_RDIFF9"].astype("float")
-    df["diff10_BA"] = df["diff10_BA"].astype("float")
-    df["diff10_OBP"] = df["diff10_OBP"].astype("float")
-    df["diff10_SLG"] = df["diff10_SLG"].astype("float")
-    df["diff10_OPS"] = df["diff10_OPS"].astype("float")
-    df["diff10_wOBA"] = df["diff10_wOBA"].astype("float")
-    df["diff_pitchers10_H9"] = df["diff_pitchers10_H9"].astype("float")
-    df["diff_pitchers10_R9"] = df["diff_pitchers10_R9"].astype("float")
-    df["diff_pitchers10_BB9"] = df["diff_pitchers10_BB9"].astype("float")
-    df["diff_pitchers10_K9"] = df["diff_pitchers10_K9"].astype("float")
-    df["diff_pitchers10_HR9"] = df["diff_pitchers10_HR9"].astype("float")
-    df["diff10_WHIP"] = df["diff10_WHIP"].astype("float")
-    df["diff10_BAA"] = df["diff10_BAA"].astype("float")
-    df["diff10_FIP"] = df["diff10_FIP"].astype("float")
 
     predictors = [
-        "diff_RDIFF9",
-        "diff_FIP",
-        "diff_wOBA",
-        "diff10_RDIFF9",
-        "diff10_FIP",
-        "diff10_wOBA"
+        "hba107_doubles",
+        "hba107_HR",
+        "hba107_BB",
+        "hba107_R",
+        "hba107_wOBA",
+        "hba107_BA",
+        "hba107_OBP",
+        "hba107_SLG",
+        "hba107_OPS",
+        "h107_RDIFF",
+        "hsp107_K",
+        "hsp107_IP",
+        "h107_RA",
+        "hbp107_BB",
+        "hbp107_K",
+        "hbp107_HR",
+        "hbp107_WHIP",
+        "hbp107_BAA",
+        "hbp107_IP",
+        "hbp107_PT",
+        "aba107_doubles",
+        "aba107_triples",
+        "aba107_K",
+        "a107_RDIFF",
+        "asp107_BB",
+        "asp107_HR",
+        "asp107_WHIP",
+        "asp107_BAA",
+        "asp107_FIP",
+        "a107_RA",
+        "abp107_BB",
+        "abp107_K",
+        "abp107_HR",
+        "abp107_IP",
+        "abp107_PT",
+        "dba107_HR",
+        "dba107_BB",
+        "dba107_R",
+        "dba107_wOBA",
+        "dba107_OBP",
+        "dba107_SLG",
+        "dba107_OPS",
+        "d107_RDIFF",
+        "dsp107_BB",
+        "dsp107_K",
+        "dsp107_WHIP",
+        "dsp107_BAA",
+        "dsp107_FIP",
+        "dsp107_IP",
+        "dsp107_PT",
+        "d107_RA",
+        "dbp107_BB",
+        "dbp107_K",
+        "dbp107_HR",
+        "dbp107_WHIP",
+        "dbp107_BAA",
+        "dbp107_IP",
+        "dbp107_PT",
     ]
-    """
+
+    predictors = [
+        "hba107_HR",
+        "hba107_BB",
+        "hba107_wOBA",
+        "hba107_BA",
+        "h107_RDIFF",
+        "h107_RA",
+        "hbp107_BB",
+        "hbp107_HR",
+        "hbp107_WHIP",
+        "hbp107_PT",
+        "aba107_triples",
+        "a107_RDIFF",
+        "asp107_BB",
+        "asp107_HR",
+        "asp107_WHIP",
+        "asp107_BAA",
+        "asp107_FIP",
+        "a107_RA",
+        "abp107_BB",
+        "abp107_HR",
+        "abp107_PT",
+        "dba107_HR",
+        "dba107_BB",
+        "dba107_R",
+        "dba107_wOBA",
+        "d107_RDIFF",
+        "dsp107_BB",
+        "dsp107_K",
+        "dsp107_WHIP",
+        "dsp107_BAA",
+        "dsp107_FIP",
+        "dsp107_IP",
+        "dsp107_PT",
+        "d107_RA",
+        "dbp107_BB",
+        "dbp107_K",
+        "dbp107_HR",
+        "dbp107_WHIP",
+        "dbp107_BAA",
+    ]
+
+    predictors = [
+        "hba107_BB",
+        "h107_RDIFF",
+        "hbp107_BB",
+        "hbp107_HR",
+        "hbp107_PT",
+        "a107_RDIFF",
+        "asp107_WHIP",
+        "asp107_BAA",
+        "a107_RA",
+        "dba107_BB",
+        "dba107_R",
+        "d107_RDIFF",
+        "dsp107_K",
+        "dsp107_WHIP",
+        "dsp107_BAA",
+        "d107_RA",
+        "dbp107_BB",
+        "dbp107_HR",
+    ]
+
+    predictors = [
+        "h107_RDIFF",
+        "hbp107_BB",
+        "hbp107_HR",
+        "hbp107_PT",
+        "a107_RDIFF",
+        "dba107_R",
+        "d107_RDIFF",
+        "dsp107_K",
+        "dbp107_BB",
+        "dbp107_HR",
+    ]
 
     response = "HomeTeamWins"
 
@@ -313,6 +461,7 @@ def main():
         KNeighborsClassifier(),
         GradientBoostingClassifier(random_state=123),
         SGDClassifier(random_state=123),
+        AdaBoostClassifier(random_state=123),
     ]
     model_html = models_test(df, predictors, response, models)
     complete_html = hw4_html + midterm_html + model_html

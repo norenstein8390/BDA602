@@ -60,15 +60,14 @@ def models_test(df, predictors, response, models):
                 best_score = model_score
                 best_name = model_name
 
-            output += f"\n<h3>Test_size: {size}</h3>"
-            output += (
-                f"\n<h3>* {model_name} Score: {model_score} Precision: {precision} Recall: {recall} Accuracy: "
-                f"{accuracy} F1: {f1} Matthews: {matthews}</h3>"
-            )
+            output += f"\n<h3>{model_name} - Test size: {size}</h3>"
+            output += f"\n<h4>* Accuracy: {accuracy}</h4>"
+            output += f"\n<h4>* Precision: {precision}</h4>"
+            output += f"\n<h4>* Recall: {recall}</h4>"
+            output += f"\n<h4>* F1 Score: {f1}</h4>"
+            output += f"\n<h4>* Matthew's Correlation Coefficient: {matthews}</h4>"
 
-    output += (
-        f"\n\n<h3>The best model tested was {best_name} (Score = {best_score})</h3>"
-    )
+    output += f"\n\n<h3>The best model tested was {best_name} - Test size: {size} (Accuracy = {best_score})</h3>"
 
     return output
 
@@ -195,7 +194,7 @@ def main():
     df["dbp107_PT"] = df["dbp107_PT"].astype("float")
 
     # full predictor list
-    predictors = [
+    predictors_all = [
         "hba107_doubles",
         "hba107_triples",
         "hba107_HR",
@@ -291,6 +290,7 @@ def main():
         "dbp107_PT",
     ]
 
+    """
     # minus p-value > .05
     predictors = [
         "hba107_doubles",
@@ -395,9 +395,10 @@ def main():
         "dbp107_WHIP",
         "dbp107_BAA",
     ]
+    """
 
     # minus MWR < [...]
-    predictors = [
+    predictors_final = [
         "hba107_BB",
         "h107_RDIFF",
         "hbp107_BB",
@@ -417,45 +418,37 @@ def main():
         "dbp107_BB",
         "dbp107_HR",
     ]
-
-    predictors = [
-        "h107_RDIFF",
-        "hbp107_BB",
-        "hbp107_HR",
-        "hbp107_PT",
-        "a107_RDIFF",
-        "dba107_R",
-        "d107_RDIFF",
-        "dsp107_K",
-        "dbp107_BB",
-        "dbp107_HR",
-    ]
+    predictor_lists = [predictors_all, predictors_final]
+    versions = ["all_features", "final_features"]
 
     response = "HomeTeamWins"
 
-    hw4_report_maker = Homework4ReportMaker(df, predictors, response)
-    hw4_html = hw4_report_maker.make_plots_rankings()
-    midterm_report_maker = MidtermReportMaker(df, predictors, response)
-    midterm_html = midterm_report_maker.make_correlations_bruteforce()
-    models = [
-        tree.DecisionTreeClassifier(random_state=123),
-        svm.SVC(random_state=123),
-        RandomForestClassifier(random_state=123),
-        LogisticRegression(random_state=123),
-        GaussianNB(),
-        KNeighborsClassifier(),
-        GradientBoostingClassifier(random_state=123),
-        SGDClassifier(random_state=123),
-        AdaBoostClassifier(random_state=123),
-    ]
-    model_html = models_test(df, predictors, response, models)
-    complete_html = hw4_html + midterm_html + model_html
+    for i in len(range(2)):
+        predictors = predictor_lists[i]
+        version = versions[i]
+        hw4_report_maker = Homework4ReportMaker(df, predictors, response)
+        hw4_html = hw4_report_maker.make_plots_rankings()
+        midterm_report_maker = MidtermReportMaker(df, predictors, response)
+        midterm_html = midterm_report_maker.make_correlations_bruteforce()
+        models = [
+            tree.DecisionTreeClassifier(random_state=123),
+            svm.SVC(random_state=123),
+            RandomForestClassifier(random_state=123),
+            LogisticRegression(random_state=123),
+            GaussianNB(),
+            KNeighborsClassifier(),
+            GradientBoostingClassifier(random_state=123),
+            SGDClassifier(random_state=123),
+            AdaBoostClassifier(random_state=123),
+        ]
+        model_html = models_test(df, predictors, response, models)
+        complete_html = hw4_html + midterm_html + model_html
 
-    with open("final/report.html", "w+") as file:
-        file.write(complete_html)
-    file.close()
-    filename = f"file:///{os.getcwd()}/final/report.html"
-    webbrowser.open_new_tab(filename)
+        with open("final/report.html", "w+") as file:
+            file.write(complete_html)
+        file.close()
+        filename = f"file:///{os.getcwd()}/final/{version}_report.html"
+        webbrowser.open_new_tab(filename)
 
 
 if __name__ == "__main__":

@@ -41,7 +41,7 @@ class Homework4ReportMaker:
             }
         )
 
-        html = "<h1>Homework 5 Report</h1>\n\n" + "<h2>Plots and Rankings</h2>\n\n"
+        html = "<h1>Final Project Report</h1>\n\n" + "<h2>Plots and Rankings</h2>\n\n"
         html += styler.to_html()
         html += "\n\n"
         return html

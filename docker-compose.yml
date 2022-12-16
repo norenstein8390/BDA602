@@ -25,7 +25,9 @@ services:
       - mariadb-nmo
     restart: "no"
     volumes:
-      - ./output:/output
+      - ./src/final/midterm_output/figs:/app/final_output/midterm_output/figs
+      - ./src/final/hw4_output/figs:/app/final_output/hw4_output/figs
+      - ./src/final:/app/final_output
     networks:
       - network
 

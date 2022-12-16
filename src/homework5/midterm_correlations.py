@@ -15,7 +15,7 @@ class MidtermCorrelations:
             yaxis_title=y_predictor,
         )
         name = x_predictor + "_" + y_predictor + "_scatter_plot"
-        link = "homework5/midterm_output/figs/" + name + ".html"
+        link = "final/midterm_output/figs/" + name + ".html"
         fig.write_html(link)
         return name
 
@@ -77,6 +77,6 @@ class MidtermCorrelations:
         )
 
         name = "cont_cont_correlation_matrix"
-        link = f"homework5/midterm_output/figs/{name}.html"
+        link = f"final/midterm_output/figs/{name}.html"
         fig.write_html(link)
         data["Cont/Cont Correlation Matrix"].append(name)

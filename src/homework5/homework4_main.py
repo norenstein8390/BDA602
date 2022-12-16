@@ -14,13 +14,13 @@ class Homework4ReportMaker:
         self.plotter = Homework4Plotter(df, response)
         self.scorer = Homework4Scorer(df, response)
 
-        out_dir_exist = os.path.exists("homework5/hw4_output/figs")
+        out_dir_exist = os.path.exists("final/hw4_output/figs")
 
         if out_dir_exist is False:
-            os.makedirs("homework5/hw4_output/figs")
+            os.makedirs("final/hw4_output/figs")
 
     def make_clickable(self, name):
-        link = f"file:///{os.getcwd()}/homework5/hw4_output/figs/{name}.html"
+        link = f"file:///{os.getcwd()}/final/hw4_output/figs/{name}.html"
         return f'<a href="{link}" target="_blank">{name}</a>'
 
     def make_html(self, dict):
@@ -65,9 +65,9 @@ class Homework4ReportMaker:
         for predictor in self.predictors:
             counter += 1
 
-            out_dir_exist = os.path.exists(f"homework5/hw4_output/figs/{predictor}")
+            out_dir_exist = os.path.exists(f"final/hw4_output/figs/{predictor}")
             if out_dir_exist is False:
-                os.makedirs(f"homework5/hw4_output/figs/{predictor}")
+                os.makedirs(f"final/hw4_output/figs/{predictor}")
 
             response_col.append(self.response)
 

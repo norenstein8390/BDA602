@@ -134,11 +134,11 @@ class MidtermBruteForce:
         fig2.update_traces(text=bin_residuals_text, texttemplate="%{text}")
 
         name_bin_plot = f"{x_predictor_name}_{y_predictor_name}_bin_mean_plot"
-        link_bin_plot = f"homework5/midterm_output/figs/{name_bin_plot}.html"
+        link_bin_plot = f"final/midterm_output/figs/{name_bin_plot}.html"
         fig1.write_html(link_bin_plot)
 
         name_residual_plot = f"{x_predictor_name}_{y_predictor_name}_bin_residual_plot"
-        link_residual_plot = f"homework5/midterm_output/figs/{name_residual_plot}.html"
+        link_residual_plot = f"final/midterm_output/figs/{name_residual_plot}.html"
         fig2.write_html(link_residual_plot)
 
         bin_residuals = bin_residuals.transpose()

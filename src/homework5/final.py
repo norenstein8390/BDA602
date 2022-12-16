@@ -6,9 +6,6 @@ import pandas as pd
 import sqlalchemy
 from homework4_main import Homework4ReportMaker
 from midterm_main import MidtermReportMaker
-
-# from pyspark import StorageLevel
-# from pyspark.sql import SparkSession
 from sklearn import svm, tree
 from sklearn.ensemble import (
     AdaBoostClassifier,
@@ -77,56 +74,14 @@ def models_test(df, predictors, response, models):
 
 
 def main():
-    '''
-    spark = SparkSession.builder.master("local[*]").getOrCreate()
-
-    database = "baseball"
-    user = "root"
-    password = ""
-    server = "localhost"
-    port = 3306
-
-    jdbc_url = f"jdbc:mysql://{server}:{port}/{database}?permitMysqlScheme"
-    jdbc_driver = "org.mariadb.jdbc.Driver"
-
-    sql_query = """SELECT * FROM final_features"""
-
-    pyspark_df = (
-        spark.read.format("jdbc")
-        .option("url", jdbc_url)
-        .option("query", sql_query)
-        .option("user", user)
-        .option("password", password)
-        .option("driver", jdbc_driver)
-        .load()
-    )
-
-    pyspark_df.createOrReplaceTempView("batter_game_stats")
-    pyspark_df.persist(StorageLevel.DISK_ONLY)
-
-    df = pyspark_df.toPandas().dropna().reset_index()
-    '''
-
-    """
     user = "root"
     password = "password123"  # pragma: allowlist secret
-    host = "mariadb:3306"
+    host = "mariadb-nmo:3306"
     db = "baseball"
     connection = f"mariadb-mariadbconnector://{user}:{password}@{host}/{db}"
     engine = sqlalchemy.create_engine(connection)
-    """
-
-    db_user = "root"
-    db_pass = "password123"  # pragma: allowlist secret
-    db_host = "mariadb-nmo:3306"
-    db_database = "baseball"
-    connect_string = f"mariadb+mariadbconnector://{db_user}:{db_pass}@{db_host}/{db_database}"  # pragma
-    sql_engine = sqlalchemy.create_engine(connect_string)
-    query = """SELECT * FROM final_features"""
-    df = pd.read_sql_query(query, sql_engine)
-
-    # sql_query = "SELECT * FROM final_features"
-    # df = pd.read_sql_query(sql_query, engine)
+    sql_query = "SELECT * FROM final_features"
+    df = pd.read_sql_query(sql_query, engine)
 
     # home batters 107
     df["hba107_doubles"] = df["hba107_doubles"].astype("float")
@@ -239,6 +194,7 @@ def main():
     df["dbp107_IP"] = df["dbp107_IP"].astype("float")
     df["dbp107_PT"] = df["dbp107_PT"].astype("float")
 
+    # full predictor list
     predictors = [
         "hba107_doubles",
         "hba107_triples",
@@ -335,6 +291,7 @@ def main():
         "dbp107_PT",
     ]
 
+    # minus p-value > .05
     predictors = [
         "hba107_doubles",
         "hba107_HR",
@@ -396,6 +353,7 @@ def main():
         "dbp107_PT",
     ]
 
+    # minus correlation > .90
     predictors = [
         "hba107_HR",
         "hba107_BB",
@@ -438,6 +396,7 @@ def main():
         "dbp107_BAA",
     ]
 
+    # minus MWR < [...]
     predictors = [
         "hba107_BB",
         "h107_RDIFF",
@@ -492,10 +451,10 @@ def main():
     model_html = models_test(df, predictors, response, models)
     complete_html = hw4_html + midterm_html + model_html
 
-    with open("homework5/report.html", "w+") as file:
+    with open("final/report.html", "w+") as file:
         file.write(complete_html)
     file.close()
-    filename = f"file:///{os.getcwd()}/homework5/report.html"
+    filename = f"file:///{os.getcwd()}/final/report.html"
     webbrowser.open_new_tab(filename)
 
 

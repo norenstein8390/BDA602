@@ -35,7 +35,7 @@ class Homework4Scorer:
             yaxis_title="Response",
         )
         fig.write_html(
-            f"homework5/hw4_output/figs/{predictor_name}_logistic_regression.html"
+            f"final/hw4_output/figs/{predictor_name}_logistic_regression.html"
         )
         return t_value, p_value
 
@@ -222,7 +222,7 @@ class Homework4Scorer:
 
         dif_w_mean_of_resp = np.mean(mean_squared_diff)
         fig.write_html(
-            f"homework5/hw4_output/figs/{predictor_name}_diff_w_mean_of_resp.html"
+            f"final/hw4_output/figs/{predictor_name}_diff_w_mean_of_resp.html"
         )
         return dif_w_mean_of_resp, sum(weighted_mean_squared_diff)
 

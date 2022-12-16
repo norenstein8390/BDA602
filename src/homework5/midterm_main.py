@@ -14,20 +14,20 @@ class MidtermReportMaker:
         self.correlations = MidtermCorrelations(self.df, response)
         self.bruteforce = MidtermBruteForce(self.df, response)
 
-        out_dir_exist = os.path.exists("homework5/midterm_output/figs")
+        out_dir_exist = os.path.exists("final/midterm_output/figs")
         if out_dir_exist is False:
-            os.makedirs("homework5/midterm_output/figs")
+            os.makedirs("final/midterm_output/figs")
 
     def make_clickable(self, name):
-        link = f"file:///{os.getcwd()}/homework5/midterm_output/figs/{name}.html"
+        link = f"file:///{os.getcwd()}/final/midterm_output/figs/{name}.html"
         return f'<a href="{link}" target="_blank">{name}</a>'
 
     def make_report(self, html):
-        with open("homework5/midterm_output/report.html", "w+") as file:
+        with open("final/midterm_output/report.html", "w+") as file:
             file.write(html)
         file.close()
 
-        filename = f"file:///{os.getcwd()}/homework5/midterm_output/report.html"
+        filename = f"file:///{os.getcwd()}/final/midterm_output/report.html"
         webbrowser.open_new_tab(filename)
 
     def make_correlations_bruteforce(self):

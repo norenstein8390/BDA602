@@ -7,12 +7,13 @@ from midterm_correlations import MidtermCorrelations
 
 
 class MidtermReportMaker:
-    def __init__(self, df, predictors, response):
+    def __init__(self, df, predictors, response, version):
         self.df = df.dropna().reset_index()
         self.predictors = predictors
         self.response = response
         self.correlations = MidtermCorrelations(self.df, response)
         self.bruteforce = MidtermBruteForce(self.df, response)
+        self.version = version
 
         out_dir_exist = os.path.exists("final/midterm_output/figs")
         if out_dir_exist is False:
@@ -58,7 +59,7 @@ class MidtermReportMaker:
         matrix_data = {"Cont/Cont Correlation Matrix": []}
 
         self.correlations.cont_cont_matrix(
-            self.predictors, cont_predictor_start, matrix_data
+            self.predictors, cont_predictor_start, matrix_data, self.version
         )
 
         matrix_df = pd.DataFrame(matrix_data)

@@ -511,7 +511,7 @@ def main():
         version = versions[i]
         hw4_report_maker = Homework4ReportMaker(df, predictors, response)
         hw4_html = hw4_report_maker.make_plots_rankings()
-        midterm_report_maker = MidtermReportMaker(df, predictors, response)
+        midterm_report_maker = MidtermReportMaker(df, predictors, response, version)
         midterm_html = midterm_report_maker.make_correlations_bruteforce()
 
         if version == "final_features":

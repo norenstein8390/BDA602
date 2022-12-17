@@ -40,7 +40,7 @@ class MidtermCorrelations:
                     self.cont_cont_plots(x_predictor, y_predictor)
                 )
 
-    def cont_cont_matrix(self, predictors, cont_predictor_start, data):
+    def cont_cont_matrix(self, predictors, cont_predictor_start, data, version):
         if cont_predictor_start == len(predictors):
             data["Cont/Cont Correlation Matrix"].append("N/A")
             return
@@ -77,6 +77,6 @@ class MidtermCorrelations:
         )
 
         name = "cont_cont_correlation_matrix"
-        link = f"final/midterm_output/figs/{name}.html"
+        link = f"final/midterm_output/figs/{name}_{version}.html"
         fig.write_html(link)
         data["Cont/Cont Correlation Matrix"].append(name)

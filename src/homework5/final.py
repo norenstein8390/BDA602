@@ -1,6 +1,5 @@
-import os
+# import os
 import sys
-import webbrowser
 
 import pandas as pd
 import sqlalchemy
@@ -24,13 +23,30 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 
+# import webbrowser
+
 
 def models_test(df, predictors, response, models):
     X = df[predictors]
     Y = df[response]
     output = "\n\n<h2>Model Scores</h2>"
-    best_name = ""
     best_score = 0
+    best_score_name = ""
+    best_accuracy = 0
+    best_accuracy_name = ""
+    best_accuracy_size = 0
+    best_precision = 0
+    best_precision_name = ""
+    best_precision_size = 0
+    best_recall = 0
+    best_recall_name = ""
+    best_recall_size = 0
+    best_f1 = 0
+    best_f1_name = ""
+    best_f1_size = 0
+    best_matthews = 0
+    best_matthews_name = ""
+    best_matthews_size = 0
 
     sizes = [0.2, 0.4, 0.6, 0.8]
 
@@ -58,16 +74,65 @@ def models_test(df, predictors, response, models):
 
             if model_score > best_score:
                 best_score = model_score
-                best_name = model_name
+                best_score_name = model_name
+                best_score_size = size
+
+            if accuracy > best_accuracy:
+                best_accuracy = accuracy
+                best_accuracy_name = model_name
+                best_accuracy_size = size
+
+            if recall > best_recall:
+                best_recall = recall
+                best_recall_name = model_name
+                best_recall_size = size
+
+            if precision > best_precision:
+                best_precision = precision
+                best_precision_name = model_name
+                best_precision_size = size
+
+            if f1 > best_f1:
+                best_f1 = f1
+                best_f1_name = model_name
+                best_f1_size = size
+
+            if abs(matthews) > abs(best_matthews):
+                best_matthews = matthews
+                best_matthews_name = model_name
+                best_matthews_size = size
 
             output += f"\n<h3>{model_name} - Test size: {size}</h3>"
-            output += f"\n<h4>* Accuracy: {accuracy}</h4>"
-            output += f"\n<h4>* Precision: {precision}</h4>"
-            output += f"\n<h4>* Recall: {recall}</h4>"
-            output += f"\n<h4>* F1 Score: {f1}</h4>"
-            output += f"\n<h4>* Matthew's Correlation Coefficient: {matthews}</h4>"
+            output += f"<h4>* Accuracy: {accuracy}</h4>"
+            output += f"<h4>* Precision: {precision}</h4>"
+            output += f"<h4>* Recall: {recall}</h4>"
+            output += f"<h4>* F1 Score: {f1}</h4>"
+            output += f"<h4>* Matthew's Correlation Coefficient: {matthews}</h4>"
 
-    output += f"\n\n<h3>The best model tested was {best_name} - Test size: {size} (Accuracy = {best_score})</h3>"
+    output += (
+        f"\n\n<h3>The best model score was {best_score_name} - Test size: "
+        f"{best_score_size} (Accuracy = {best_score})</h3>"
+    )
+    output += (
+        f"\n\n<h3>The best model by accuracy was {best_accuracy_name} - Test size: "
+        f"{best_accuracy_size} (Accuracy = {best_accuracy})</h3>"
+    )
+    output += (
+        f"\n\n<h3>The best model by precision was {best_precision_name} - Test size: "
+        f"{best_precision_size} (Precision = {best_precision})</h3>"
+    )
+    output += (
+        f"\n\n<h3>The best model by recall was {best_recall_name} - Test size: "
+        f"{best_recall_size} (Recall = {best_recall})</h3>"
+    )
+    output += (
+        f"\n\n<h3>The best model by F1 score was {best_f1_name} - Test size: "
+        f"{best_f1_size} (F1 Score = {best_f1})</h3>"
+    )
+    output += (
+        f"\n\n<h3>The best model by Matthew's correlation coefficient was {best_matthews_name} - Test size: "
+        f"{best_matthews_size} (Matthew's Correlation Coefficient = {best_matthews})</h3>"
+    )
 
     return output
 
@@ -418,37 +483,59 @@ def main():
         "dbp107_BB",
         "dbp107_HR",
     ]
+
+    """
+    # testing stuff
+    predictors_all = [
+        "dsp107_WHIP",
+        "dsp107_BAA",
+        "d107_RA",
+        "dbp107_BB",
+        "dbp107_HR",
+    ]
+
+    predictors_final = [
+        "d107_RA",
+        "dbp107_BB",
+        "dbp107_HR",
+    ]
+    """
+
     predictor_lists = [predictors_all, predictors_final]
     versions = ["all_features", "final_features"]
 
     response = "HomeTeamWins"
 
-    for i in len(range(2)):
+    for i in range(2):
         predictors = predictor_lists[i]
         version = versions[i]
         hw4_report_maker = Homework4ReportMaker(df, predictors, response)
         hw4_html = hw4_report_maker.make_plots_rankings()
         midterm_report_maker = MidtermReportMaker(df, predictors, response)
         midterm_html = midterm_report_maker.make_correlations_bruteforce()
-        models = [
-            tree.DecisionTreeClassifier(random_state=123),
-            svm.SVC(random_state=123),
-            RandomForestClassifier(random_state=123),
-            LogisticRegression(random_state=123),
-            GaussianNB(),
-            KNeighborsClassifier(),
-            GradientBoostingClassifier(random_state=123),
-            SGDClassifier(random_state=123),
-            AdaBoostClassifier(random_state=123),
-        ]
-        model_html = models_test(df, predictors, response, models)
-        complete_html = hw4_html + midterm_html + model_html
 
-        with open("final/report.html", "w+") as file:
+        if version == "final_features":
+            models = [
+                tree.DecisionTreeClassifier(random_state=123),
+                svm.SVC(random_state=123),
+                RandomForestClassifier(random_state=123),
+                LogisticRegression(random_state=123),
+                GaussianNB(),
+                KNeighborsClassifier(),
+                GradientBoostingClassifier(random_state=123),
+                SGDClassifier(random_state=123),
+                AdaBoostClassifier(random_state=123),
+            ]
+            model_html = models_test(df, predictors, response, models)
+            complete_html = hw4_html + midterm_html + model_html
+        else:
+            complete_html = hw4_html + midterm_html
+
+        with open(f"final/{version}_report.html", "w+") as file:
             file.write(complete_html)
         file.close()
-        filename = f"file:///{os.getcwd()}/final/{version}_report.html"
-        webbrowser.open_new_tab(filename)
+        # filename = f"file:///{os.getcwd()}/final/{version}_report.html"
+        # webbrowser.open_new_tab(filename)
 
 
 if __name__ == "__main__":

@@ -40,6 +40,8 @@ class Homework4Scorer:
         return t_value, p_value
 
     def diff_with_mean_of_resp(self, predictor_name, cat_check):
+        need_widths = False
+
         df = pd.DataFrame(
             {
                 predictor_name: self.df[predictor_name],
@@ -99,8 +101,6 @@ class Homework4Scorer:
             bin_counts[0] / len(predictor) < 0.05
             or bin_counts[9] / len(predictor) < 0.05
         ):
-            print(predictor)
-            print(predictor[0])
             first_bin_end = predictor[int(len(predictor) * 0.05)]
             last_bin_start = predictor[int(len(predictor) * 0.95)]
             full_width = abs(last_bin_start - first_bin_end)
@@ -123,6 +123,7 @@ class Homework4Scorer:
                 bin_width,
                 abs(max_value - last_bin_start),
             ]
+            need_widths = True
 
             for i in range(7):
                 lower_bins.append(lower_bins[i + 1] + bin_width)
@@ -136,9 +137,6 @@ class Homework4Scorer:
 
             bin_counts = np.repeat(0, num_bins)
             bin_responses = np.repeat(0, num_bins)
-            print(lower_bins)
-            print(upper_bins)
-            print(bin_centers)
 
             for i in range(len(predictor)):
                 cur_val = predictor[i]
@@ -177,10 +175,16 @@ class Homework4Scorer:
 
         fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-        fig.add_trace(
-            go.Bar(x=bin_centers, y=bin_counts, width=widths, name="Population"),
-            secondary_y=False,
-        )
+        if need_widths is True:
+            fig.add_trace(
+                go.Bar(x=bin_centers, y=bin_counts, width=widths, name="Population"),
+                secondary_y=False,
+            )
+        else:
+            fig.add_trace(
+                go.Bar(x=bin_centers, y=bin_counts, name="Population"),
+                secondary_y=False,
+            )
 
         fig.add_trace(
             go.Scatter(

@@ -1,4 +1,3 @@
-# import os
 import sys
 
 import pandas as pd
@@ -20,10 +19,6 @@ from sklearn.metrics import (
     recall_score,
 )
 from sklearn.model_selection import train_test_split
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsClassifier
-
-# import webbrowser
 
 
 def models_test(df, predictors, response, models):
@@ -57,7 +52,7 @@ def models_test(df, predictors, response, models):
                 Y,
                 test_size=size,
                 shuffle=False,
-                random_state=None,
+                random_state=123,
             )
 
             model = models[i]
@@ -355,114 +350,6 @@ def main():
         "dbp107_PT",
     ]
 
-    """
-    # minus p-value > .05
-    predictors = [
-        "hba107_doubles",
-        "hba107_HR",
-        "hba107_BB",
-        "hba107_R",
-        "hba107_wOBA",
-        "hba107_BA",
-        "hba107_OBP",
-        "hba107_SLG",
-        "hba107_OPS",
-        "h107_RDIFF",
-        "hsp107_K",
-        "hsp107_IP",
-        "h107_RA",
-        "hbp107_BB",
-        "hbp107_K",
-        "hbp107_HR",
-        "hbp107_WHIP",
-        "hbp107_BAA",
-        "hbp107_IP",
-        "hbp107_PT",
-        "aba107_doubles",
-        "aba107_triples",
-        "aba107_K",
-        "a107_RDIFF",
-        "asp107_BB",
-        "asp107_HR",
-        "asp107_WHIP",
-        "asp107_BAA",
-        "asp107_FIP",
-        "a107_RA",
-        "abp107_BB",
-        "abp107_K",
-        "abp107_HR",
-        "abp107_IP",
-        "abp107_PT",
-        "dba107_HR",
-        "dba107_BB",
-        "dba107_R",
-        "dba107_wOBA",
-        "dba107_OBP",
-        "dba107_SLG",
-        "dba107_OPS",
-        "d107_RDIFF",
-        "dsp107_BB",
-        "dsp107_K",
-        "dsp107_WHIP",
-        "dsp107_BAA",
-        "dsp107_FIP",
-        "dsp107_IP",
-        "dsp107_PT",
-        "d107_RA",
-        "dbp107_BB",
-        "dbp107_K",
-        "dbp107_HR",
-        "dbp107_WHIP",
-        "dbp107_BAA",
-        "dbp107_IP",
-        "dbp107_PT",
-    ]
-
-    # minus correlation > .90
-    predictors = [
-        "hba107_HR",
-        "hba107_BB",
-        "hba107_wOBA",
-        "hba107_BA",
-        "h107_RDIFF",
-        "h107_RA",
-        "hbp107_BB",
-        "hbp107_HR",
-        "hbp107_WHIP",
-        "hbp107_PT",
-        "aba107_triples",
-        "a107_RDIFF",
-        "asp107_BB",
-        "asp107_HR",
-        "asp107_WHIP",
-        "asp107_BAA",
-        "asp107_FIP",
-        "a107_RA",
-        "abp107_BB",
-        "abp107_HR",
-        "abp107_PT",
-        "dba107_HR",
-        "dba107_BB",
-        "dba107_R",
-        "dba107_wOBA",
-        "d107_RDIFF",
-        "dsp107_BB",
-        "dsp107_K",
-        "dsp107_WHIP",
-        "dsp107_BAA",
-        "dsp107_FIP",
-        "dsp107_IP",
-        "dsp107_PT",
-        "d107_RA",
-        "dbp107_BB",
-        "dbp107_K",
-        "dbp107_HR",
-        "dbp107_WHIP",
-        "dbp107_BAA",
-    ]
-    """
-
-    # minus MWR < [...]
     predictors_final = [
         "hba107_BB",
         "h107_RDIFF",
@@ -483,23 +370,6 @@ def main():
         "dbp107_BB",
         "dbp107_HR",
     ]
-
-    """
-    # testing stuff
-    predictors_all = [
-        "dsp107_WHIP",
-        "dsp107_BAA",
-        "d107_RA",
-        "dbp107_BB",
-        "dbp107_HR",
-    ]
-
-    predictors_final = [
-        "d107_RA",
-        "dbp107_BB",
-        "dbp107_HR",
-    ]
-    """
 
     predictor_lists = [predictors_all, predictors_final]
     versions = ["all_features", "final_features"]
@@ -520,8 +390,6 @@ def main():
                 svm.SVC(random_state=123),
                 RandomForestClassifier(random_state=123),
                 LogisticRegression(random_state=123),
-                GaussianNB(),
-                KNeighborsClassifier(),
                 GradientBoostingClassifier(random_state=123),
                 SGDClassifier(random_state=123),
                 AdaBoostClassifier(random_state=123),
@@ -534,8 +402,6 @@ def main():
         with open(f"final/{version}_report.html", "w+") as file:
             file.write(complete_html)
         file.close()
-        # filename = f"file:///{os.getcwd()}/final/{version}_report.html"
-        # webbrowser.open_new_tab(filename)
 
 
 if __name__ == "__main__":

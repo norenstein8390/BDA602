@@ -10,10 +10,9 @@ fi
 
 echo "database exists"
 echo "adding tables for final project"
-#mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < make_constants_table.sql
-#mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < final.sql
+mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < make_constants_table.sql
+mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < final.sql
 
 echo "generating output"
 python final.py
-echo "output now available"
-#echo "/output/output.txt now available"
+echo "output reports now available in final folder"

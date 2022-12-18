@@ -76,7 +76,7 @@ class MidtermCorrelations:
             title="Continuous vs. Continuous Predictors: Correlation Matrix",
         )
 
-        name = "cont_cont_correlation_matrix"
-        link = f"final/midterm_output/figs/{name}_{version}.html"
+        name = f"cont_cont_correlation_matrix_{version}"
+        link = f"final/midterm_output/figs/{name}.html"
         fig.write_html(link)
         data["Cont/Cont Correlation Matrix"].append(name)

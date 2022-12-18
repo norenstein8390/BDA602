@@ -1,7 +1,5 @@
 #!/bin/sh
-sleep 10
-
-#echo "in bash"
+sleep 20
 
 if ! mariadb -u root -ppassword123 -h mariadb-nmo -e "USE baseball;"
 then
@@ -10,7 +8,11 @@ then
   mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < baseball.sql
 fi
 
-mariadb -u root -ppassword123 -h mariadb-nmo baseball < homework6.sql
+echo "database exists"
+echo "adding tables for final project"
+mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < make_constants_table.sql
+mariadb -u root -ppassword123 -h mariadb-nmo -D baseball < final.sql
+
 echo "generating output"
-mariadb -u root -ppassword123 -h mariadb-nmo baseball -e "SELECT * FROM rolling_avg;" > /output/output.txt
-echo "/output/output.txt now available"
+python final.py
+echo "output reports now available in final folder"

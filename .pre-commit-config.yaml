@@ -8,6 +8,9 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
+        args:
+          - --profile
+          - black
         name: isort
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
     rev: v1.3.0

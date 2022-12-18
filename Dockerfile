@@ -19,10 +19,18 @@ COPY requirements.txt .
 RUN pip3 install --compile --no-cache-dir -r requirements.txt
 
 # Copy over code
-COPY ./src/homework6/homework6.sql .
-COPY ./src/homework6/main_bash.sh .
+COPY ./src/final/final.sh .
+COPY ./src/final/final.sql .
+COPY ./src/final/make_constants_table.sql .
+COPY ./src/homework5/final.py .
+COPY ./src/homework5/homework4_main.py .
+COPY ./src/homework5/homework4_plots.py .
+COPY ./src/homework5/homework4_scores.py .
+COPY ./src/homework5/midterm_bruteforce.py .
+COPY ./src/homework5/midterm_correlations.py .
+COPY ./src/homework5/midterm_main.py .
 COPY baseball.sql .
 
 # Run app (added executable priviledge)
-RUN chmod +x ./main_bash.sh
-CMD ./main_bash.sh
+RUN chmod +x ./final.sh
+CMD ./final.sh

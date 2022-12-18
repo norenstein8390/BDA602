@@ -15,7 +15,7 @@ class MidtermCorrelations:
             yaxis_title=y_predictor,
         )
         name = x_predictor + "_" + y_predictor + "_scatter_plot"
-        link = "homework5/midterm_output/figs/" + name + ".html"
+        link = "final/midterm_output/figs/" + name + ".html"
         fig.write_html(link)
         return name
 
@@ -40,7 +40,7 @@ class MidtermCorrelations:
                     self.cont_cont_plots(x_predictor, y_predictor)
                 )
 
-    def cont_cont_matrix(self, predictors, cont_predictor_start, data):
+    def cont_cont_matrix(self, predictors, cont_predictor_start, data, version):
         if cont_predictor_start == len(predictors):
             data["Cont/Cont Correlation Matrix"].append("N/A")
             return
@@ -76,7 +76,7 @@ class MidtermCorrelations:
             title="Continuous vs. Continuous Predictors: Correlation Matrix",
         )
 
-        name = "cont_cont_correlation_matrix"
-        link = f"homework5/midterm_output/figs/{name}.html"
+        name = f"cont_cont_correlation_matrix_{version}"
+        link = f"final/midterm_output/figs/{name}.html"
         fig.write_html(link)
         data["Cont/Cont Correlation Matrix"].append(name)

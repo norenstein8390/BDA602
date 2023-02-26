@@ -12,8 +12,6 @@ services:
       - TZ=America/Los_Angeles
     volumes:
       - ./.db:/config
-    ports:
-      - "5100:3306"
     restart: unless-stopped
     networks:
       - network
@@ -27,9 +25,9 @@ services:
       - mariadb-nmo
     restart: "no"
     volumes:
-      - ./output:/output
-    ports:
-      - "5101:3307"
+      - ./src/final/midterm_output/figs:/app/final/midterm_output/figs
+      - ./src/final/hw4_output/figs:/app/final/hw4_output/figs
+      - ./src/final:/app/final
     networks:
       - network
 

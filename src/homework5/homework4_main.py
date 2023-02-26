@@ -14,18 +14,20 @@ class Homework4ReportMaker:
         self.plotter = Homework4Plotter(df, response)
         self.scorer = Homework4Scorer(df, response)
 
-        out_dir_exist = os.path.exists("homework5/hw4_output/figs")
+        out_dir_exist = os.path.exists("final/hw4_output/figs")
 
         if out_dir_exist is False:
-            os.makedirs("homework5/hw4_output/figs")
+            os.makedirs("final/hw4_output/figs")
 
     def make_clickable(self, name):
-        link = f"file:///{os.getcwd()}/homework5/hw4_output/figs/{name}.html"
+        # link = f"file:///{os.getcwd()}/final/hw4_output/figs/{name}.html"
+        # link = f"file:///src/final/hw4_output/figs/{name}.html"
+        link = f"hw4_output/figs/{name}.html"
         return f'<a href="{link}" target="_blank">{name}</a>'
 
     def make_html(self, dict):
         df = pd.DataFrame(dict)
-        df = df.sort_values(by=["MWR Weighted"], ascending=False)
+        df = df.sort_values(by=["t-score abs"], ascending=False)
 
         styler = df.style.format(
             {
@@ -39,7 +41,7 @@ class Homework4ReportMaker:
             }
         )
 
-        html = "<h1>Homework 5 Report</h1>\n\n" + "<h2>Plots and Rankings</h2>\n\n"
+        html = "<h1>Final Project Report</h1>\n\n" + "<h2>Plots and Rankings</h2>\n\n"
         html += styler.to_html()
         html += "\n\n"
         return html
@@ -65,9 +67,9 @@ class Homework4ReportMaker:
         for predictor in self.predictors:
             counter += 1
 
-            out_dir_exist = os.path.exists(f"homework5/hw4_output/figs/{predictor}")
+            out_dir_exist = os.path.exists(f"final/hw4_output/figs/{predictor}")
             if out_dir_exist is False:
-                os.makedirs(f"homework5/hw4_output/figs/{predictor}")
+                os.makedirs(f"final/hw4_output/figs/{predictor}")
 
             response_col.append(self.response)
 
@@ -117,6 +119,7 @@ class Homework4ReportMaker:
             "Distribution Plot": distribution_plot_col,
             "Violin Plot": violin_plot_col,
             "t-score": t_score_col,
+            "t-score abs": [abs(score) for score in t_score_col],
             "p-value": p_value_col,
             "Logistic Regression Plot": logistic_regression_col,
             "RF VarImp": rf_var_imp_col,

@@ -52,5 +52,5 @@ class Homework4Plotter:
             xaxis_title=self.response,
             yaxis_title=predictor,
         )
-        fig1.write_html(f"homework5/hw4_output/figs/{predictor}_distribution_plot.html")
-        fig2.write_html(f"homework5/hw4_output/figs/{predictor}_violin_plot.html")
+        fig1.write_html(f"final/hw4_output/figs/{predictor}_distribution_plot.html")
+        fig2.write_html(f"final/hw4_output/figs/{predictor}_violin_plot.html")
